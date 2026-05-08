@@ -19,5 +19,7 @@ namespace EvG.Models
         public int? RematchCount { get; set; }
         public int? MapWidth { get; set; }
         public int? MapHeight { get; set; }
+        public string? FixedMap { get; set; }
+        public bool? RandomMap { get; set; }
     }
 }

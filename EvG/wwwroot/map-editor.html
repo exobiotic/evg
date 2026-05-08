@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Editor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e2e;
+            color: #cdd6f4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── TOOLBAR ── */
+        #toolbar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 8px 16px;
+            background: #181825;
+            border-bottom: 1px solid #313244;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        #toolbar h1 { font-size: 1.1em; color: #cba6f7; white-space: nowrap; }
+
+        .tb-group { display: flex; align-items: center; gap: 8px; }
+
+        .tb-label { font-size: 0.78em; color: #a6adc8; white-space: nowrap; }
+
+        input[type="number"], input[type="text"] {
+            background: #313244;
+            border: 1px solid #45475a;
+            color: #cdd6f4;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            width: 60px;
+        }
+        input[type="text"] { width: 150px; }
+
+        button {
+            background: #45475a;
+            color: #cdd6f4;
+            border: 1px solid #585b70;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+        button:hover { background: #585b70; }
+        button.primary { background: #cba6f7; color: #1e1e2e; border-color: #cba6f7; font-weight: 600; }
+        button.primary:hover { background: #b4befe; }
+        button.danger { background: #f38ba8; color: #1e1e2e; border-color: #f38ba8; }
+        button.danger:hover { background: #eba0ac; }
+
+        select {
+            background: #313244;
+            border: 1px solid #45475a;
+            color: #cdd6f4;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        #workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ── TILE PALETTE ── */
+        #palette {
+            width: 220px;
+            background: #181825;
+            border-right: 1px solid #313244;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        #palette-header {
+            padding: 10px 12px 6px;
+            font-size: 0.8em;
+            color: #a6adc8;
+            border-bottom: 1px solid #313244;
+            flex-shrink: 0;
+        }
+
+        #palette-header .hint { font-size: 0.75em; color: #6c7086; margin-top: 3px; }
+
+        #tileset-canvas-wrap {
+            overflow: auto;
+            flex: 1;
+            padding: 8px;
+        }
+
+        #tilesetCanvas {
+            display: block;
+            cursor: crosshair;
+            image-rendering: pixelated;
+        }
+
+        /* walkable indicator strip below palette */
+        #walkable-status {
+            padding: 8px 12px;
+            font-size: 0.78em;
+            border-top: 1px solid #313244;
+            background: #1e1e2e;
+            flex-shrink: 0;
+        }
+        #walkable-status span { font-weight: 600; }
+        #walkable-status .yes { color: #a6e3a1; }
+        #walkable-status .no  { color: #f38ba8; }
+
+        /* ── MAP CANVAS AREA ── */
+        #map-area {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        #mapCanvas {
+            display: block;
+            image-rendering: pixelated;
+            cursor: crosshair;
+            box-shadow: 0 0 30px rgba(0,0,0,0.6);
+        }
+
+        /* ── RIGHT PANEL ── */
+        #right-panel {
+            width: 200px;
+            background: #181825;
+            border-left: 1px solid #313244;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            padding: 12px;
+            border-bottom: 1px solid #313244;
+        }
+
+        .panel-section h3 {
+            font-size: 0.78em;
+            color: #a6adc8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+        }
+
+        .panel-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.82em;
+        }
+
+        .walkable-list {
+            font-size: 0.78em;
+            color: #a6e3a1;
+            word-break: break-all;
+            line-height: 1.6;
+        }
+
+        .unit-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .unit-row select { flex: 1; }
+
+        .unit-row button { padding: 3px 7px; font-size: 0.75em; }
+
+        #units-list { margin-bottom: 8px; }
+
+        /* ── STATUS BAR ── */
+        #statusbar {
+            background: #313244;
+            padding: 3px 12px;
+            font-size: 0.75em;
+            color: #a6adc8;
+            display: flex;
+            gap: 20px;
+            flex-shrink: 0;
+        }
+
+        #statusbar span { color: #cdd6f4; }
+
+        /* ── MODAL ── */
+        #modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        #modal-overlay.show { display: flex; }
+
+        #modal {
+            background: #1e1e2e;
+            border: 1px solid #45475a;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: auto;
+        }
+
+        #modal h2 { margin-bottom: 12px; color: #cba6f7; }
+
+        #modal pre {
+            background: #181825;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            overflow: auto;
+            max-height: 300px;
+            color: #a6e3a1;
+            white-space: pre-wrap;
+        }
+
+        #modal .modal-actions { display: flex; gap: 10px; margin-top: 12px; justify-content: flex-end; }
+
+        /* ── BRUSH MODES ── */
+        .mode-btn { padding: 4px 10px; font-size: 0.8em; }
+        .mode-btn.active { background: #89b4fa; color: #1e1e2e; border-color: #89b4fa; }
+
+        /* ── FILL INDICATOR ── */
+        #selected-tile-preview {
+            width: 36px; height: 36px;
+            image-rendering: pixelated;
+            border: 2px solid #cba6f7;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════ TOOLBAR ══════════════ -->
+<div id="toolbar">
+    <h1>🗺 Map Editor</h1>
+
+    <div class="tb-group">
+        <span class="tb-label">Name:</span>
+        <input type="text" id="mapName" value="my_map">
+    </div>
+
+    <div class="tb-group">
+        <span class="tb-label">W:</span>
+        <input type="number" id="mapWidth"  value="15" min="3" max="60">
+        <span class="tb-label">H:</span>
+        <input type="number" id="mapHeight" value="15" min="3" max="60">
+        <button onclick="resizeMap()">Resize</button>
+    </div>
+
+    <div class="tb-group">
+        <span class="tb-label">Zoom:</span>
+        <select id="zoom" onchange="setZoom()">
+            <option value="1">1×</option>
+            <option value="1.5">1.5×</option>
+            <option value="2" selected>2×</option>
+            <option value="3">3×</option>
+        </select>
+    </div>
+
+    <div class="tb-group">
+        <button class="mode-btn active" id="modePlace" onclick="setMode('place')">✏️ Place</button>
+        <button class="mode-btn"        id="modeFill"  onclick="setMode('fill')">🪣 Fill</button>
+        <button class="mode-btn"        id="modePick"  onclick="setMode('pick')">💉 Pick</button>
+        <button class="mode-btn"        id="modeErase" onclick="setMode('erase')">🧹 Erase</button>
+    </div>
+
+    <div class="tb-group" style="margin-left:auto;">
+        <button onclick="fillAll()">Fill Map</button>
+        <button onclick="clearMap()">Clear</button>
+        <button class="primary" onclick="previewSave()">Export Map…</button>
+    </div>
+</div>
+
+<!-- ══════════════ WORKSPACE ══════════════ -->
+<div id="workspace">
+
+    <!-- TILE PALETTE -->
+    <div id="palette">
+        <div id="palette-header">
+            Tile Palette
+            <div class="hint">Click to select · Right-click to toggle walkable</div>
+        </div>
+        <div id="tileset-canvas-wrap">
+            <canvas id="tilesetCanvas"></canvas>
+        </div>
+        <div id="walkable-status">
+            Selected tile: <span id="selTileId">11</span>
+            &nbsp;·&nbsp; Walkable: <span id="selWalkable" class="yes">YES</span>
+        </div>
+    </div>
+
+    <!-- MAP CANVAS -->
+    <div id="map-area">
+        <canvas id="mapCanvas"></canvas>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div id="right-panel">
+
+        <div class="panel-section">
+            <h3>Selected Tile</h3>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                <canvas id="selected-tile-preview" width="32" height="32"></canvas>
+                <div style="font-size:0.82em;">
+                    ID: <span id="rSelId">11</span><br>
+                    <span id="rSelWalk" style="color:#a6e3a1;">Walkable</span>
+                </div>
+            </div>
+            <button style="width:100%; font-size:0.78em;" onclick="toggleWalkableCurrent()">Toggle Walkable</button>
+        </div>
+
+        <div class="panel-section">
+            <h3>Walkable Tile IDs</h3>
+            <div class="walkable-list" id="walkableList"></div>
+        </div>
+
+        <div class="panel-section">
+            <h3>Units</h3>
+            <div id="units-list"></div>
+            <div class="unit-row">
+                <select id="newUnitType">
+                    <option value="dwarf">dwarf</option>
+                    <option value="minotaur">minotaur</option>
+                </select>
+                <button onclick="addUnit()">+</button>
+            </div>
+            <div style="font-size:0.75em; color:#6c7086; margin-top:4px;">
+                Units are placed randomly on floor tiles when the game starts.
+            </div>
+        </div>
+
+        <div class="panel-section">
+            <h3>Stats</h3>
+            <div class="panel-row"><span>Size:</span> <span id="statSize">15×15</span></div>
+            <div class="panel-row"><span>Floor tiles:</span> <span id="statFloor">0</span></div>
+            <div class="panel-row"><span>Wall tiles:</span>  <span id="statWall">0</span></div>
+            <div class="panel-row"><span>Units:</span>       <span id="statUnits">0</span></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- STATUS BAR -->
+<div id="statusbar">
+    Cursor: <span id="sbCursor">–</span>
+    &nbsp;|&nbsp; Tile: <span id="sbTile">–</span>
+    &nbsp;|&nbsp; Mode: <span id="sbMode">place</span>
+</div>
+
+<!-- EXPORT MODAL -->
+<div id="modal-overlay">
+    <div id="modal">
+        <h2>Export Map</h2>
+        <div class="panel-row">
+            <span style="font-size:0.85em;">Filename: </span>
+            <input type="text" id="exportName" style="width:180px;" value="my_map">
+        </div>
+        <pre id="jsonPreview"></pre>
+        <div class="modal-actions">
+            <button onclick="downloadJson()">⬇ Download .json</button>
+            <button class="primary" onclick="saveToServer()">💾 Save to Server</button>
+            <button onclick="closeModal()">Cancel</button>
+        </div>
+        <div id="saveMsg" style="margin-top:8px; font-size:0.82em;"></div>
+    </div>
+</div>
+
+<script>
+// ══════════════ CONSTANTS ══════════════
+const TILE_W = 32, TILE_H = 32;
+const TILESET_COLS = 9, TILESET_ROWS = 9;
+const TOTAL_TILES = TILESET_COLS * TILESET_ROWS; // 81
+const TILESET_SRC = '/assets/maps/basic/tileset_complet.png';
+
+// Default walkable tiles (floor tiles from basic map)
+let walkableTiles = new Set([11]);
+
+// ══════════════ STATE ══════════════
+let mapW = 15, mapH = 15;
+let mapData = [];          // 1-indexed tile ids, 0 = empty
+let zoom = 2;
+let selectedTile = 11;
+let mode = 'place';
+let isPainting = false;
+let lastCell = null;
+
+let units = [
+    { type: 'dwarf' },
+    { type: 'dwarf' },
+    { type: 'dwarf' },
+    { type: 'minotaur' },
+    { type: 'minotaur' },
+    { type: 'minotaur' },
+];
+
+const tilesetImg = new Image();
+
+// ══════════════ INIT ══════════════
+tilesetImg.onload = () => {
+    initPalette();
+    initMap();
+    renderAll();
+};
+tilesetImg.src = TILESET_SRC;
+
+function initMap() {
+    mapData = new Array(mapW * mapH).fill(11);
+    syncMapCanvas();
+}
+
+function syncMapCanvas() {
+    const c = document.getElementById('mapCanvas');
+    c.width  = mapW * TILE_W * zoom;
+    c.height = mapH * TILE_H * zoom;
+    document.getElementById('mapWidth').value  = mapW;
+    document.getElementById('mapHeight').value = mapH;
+    document.getElementById('statSize').textContent = `${mapW}×${mapH}`;
+    updateStats();
+}
+
+// ══════════════ PALETTE ══════════════
+function initPalette() {
+    const scale = 1.8;
+    const c = document.getElementById('tilesetCanvas');
+    c.width  = TILESET_COLS * TILE_W * scale;
+    c.height = TILESET_ROWS * TILE_H * scale;
+    c.style.width  = c.width  + 'px';
+    c.style.height = c.height + 'px';
+
+    drawPalette(scale);
+
+    c.addEventListener('click',       e => paletteClick(e, scale, false));
+    c.addEventListener('contextmenu', e => { e.preventDefault(); paletteClick(e, scale, true); });
+}
+
+function drawPalette(scale = 1.8) {
+    const c = document.getElementById('tilesetCanvas');
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, c.width, c.height);
+
+    for (let i = 0; i < TOTAL_TILES; i++) {
+        const sx = (i % TILESET_COLS) * TILE_W;
+        const sy = Math.floor(i / TILESET_COLS) * TILE_H;
+        const dx = (i % TILESET_COLS) * TILE_W * scale;
+        const dy = Math.floor(i / TILESET_COLS) * TILE_H * scale;
+
+        ctx.drawImage(tilesetImg, sx, sy, TILE_W, TILE_H, dx, dy, TILE_W * scale, TILE_H * scale);
+
+        const tid = i + 1;
+
+        // walkable overlay (green tint)
+        if (walkableTiles.has(tid)) {
+            ctx.fillStyle = 'rgba(80,220,120,0.22)';
+            ctx.fillRect(dx, dy, TILE_W * scale, TILE_H * scale);
+        }
+
+        // selected highlight
+        if (tid === selectedTile) {
+            ctx.strokeStyle = '#cba6f7';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(dx + 1, dy + 1, TILE_W * scale - 2, TILE_H * scale - 2);
+        }
+
+        // tile id label
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(dx, dy + TILE_H * scale - 11, TILE_W * scale, 11);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${Math.max(8, 7 * scale)}px monospace`;
+        ctx.fillText(tid, dx + 2, dy + TILE_H * scale - 2);
+    }
+}
+
+function paletteClick(e, scale, rightClick) {
+    const c = document.getElementById('tilesetCanvas');
+    const rect = c.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const col = Math.floor(x / (TILE_W * scale));
+    const row = Math.floor(y / (TILE_H * scale));
+    if (col >= TILESET_COLS || row >= TILESET_ROWS) return;
+
+    const tid = row * TILESET_COLS + col + 1;
+
+    if (rightClick) {
+        toggleWalkable(tid);
+    } else {
+        selectedTile = tid;
+    }
+
+    updateSelectedTileUI();
+    drawPalette(scale);
+}
+
+// ══════════════ MAP CANVAS ══════════════
+function renderAll() {
+    drawPalette(1.8);
+    renderMap();
+    updateStats();
+}
+
+function renderMap() {
+    const c = document.getElementById('mapCanvas');
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    ctx.clearRect(0, 0, c.width, c.height);
+
+    for (let y = 0; y < mapH; y++) {
+        for (let x = 0; x < mapW; x++) {
+            const tid = mapData[y * mapW + x];
+            if (tid === 0) {
+                ctx.fillStyle = '#11111b';
+                ctx.fillRect(x * TILE_W * zoom, y * TILE_H * zoom, TILE_W * zoom, TILE_H * zoom);
+            } else {
+                const si = tid - 1;
+                const sx = (si % TILESET_COLS) * TILE_W;
+                const sy = Math.floor(si / TILESET_COLS) * TILE_H;
+                ctx.drawImage(tilesetImg, sx, sy, TILE_W, TILE_H,
+                    x * TILE_W * zoom, y * TILE_H * zoom, TILE_W * zoom, TILE_H * zoom);
+
+                // Walkability overlay
+                if (!walkableTiles.has(tid)) {
+                    ctx.fillStyle = 'rgba(243,139,168,0.15)';
+                    ctx.fillRect(x * TILE_W * zoom, y * TILE_H * zoom, TILE_W * zoom, TILE_H * zoom);
+                }
+            }
+        }
+    }
+
+    // Grid
+    ctx.strokeStyle = 'rgba(100,100,120,0.3)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x <= mapW; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * TILE_W * zoom, 0);
+        ctx.lineTo(x * TILE_W * zoom, mapH * TILE_H * zoom);
+        ctx.stroke();
+    }
+    for (let y = 0; y <= mapH; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * TILE_H * zoom);
+        ctx.lineTo(mapW * TILE_W * zoom, y * TILE_H * zoom);
+        ctx.stroke();
+    }
+}
+
+// ══════════════ MAP INTERACTIONS ══════════════
+const mapCanvas = document.getElementById('mapCanvas');
+
+mapCanvas.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    isPainting = true;
+    lastCell = null;
+    handleMapEvent(e);
+});
+
+mapCanvas.addEventListener('mousemove', e => {
+    const { cx, cy } = getCellFromEvent(e);
+    document.getElementById('sbCursor').textContent = `${cx}, ${cy}`;
+    if (cx >= 0 && cx < mapW && cy >= 0 && cy < mapH) {
+        const tid = mapData[cy * mapW + cx];
+        document.getElementById('sbTile').textContent = tid ? `${tid} (${walkableTiles.has(tid) ? 'floor' : 'wall'})` : 'empty';
+    }
+    if (isPainting) handleMapEvent(e);
+});
+
+mapCanvas.addEventListener('mouseup',   () => { isPainting = false; lastCell = null; });
+mapCanvas.addEventListener('mouseleave',() => { isPainting = false; lastCell = null; });
+
+function getCellFromEvent(e) {
+    const rect = mapCanvas.getBoundingClientRect();
+    return {
+        cx: Math.floor((e.clientX - rect.left) / (TILE_W * zoom)),
+        cy: Math.floor((e.clientY - rect.top)  / (TILE_H * zoom))
+    };
+}
+
+function handleMapEvent(e) {
+    const { cx, cy } = getCellFromEvent(e);
+    if (cx < 0 || cx >= mapW || cy < 0 || cy >= mapH) return;
+    const key = `${cx},${cy}`;
+    if (key === lastCell) return;
+    lastCell = key;
+
+    if (mode === 'pick') {
+        selectedTile = mapData[cy * mapW + cx] || 11;
+        updateSelectedTileUI();
+        drawPalette(1.8);
+        setMode('place');
+        return;
+    }
+
+    if (mode === 'fill') {
+        floodFill(cx, cy, selectedTile);
+    } else if (mode === 'erase') {
+        mapData[cy * mapW + cx] = 0;
+    } else {
+        mapData[cy * mapW + cx] = selectedTile;
+    }
+
+    renderMap();
+    updateStats();
+}
+
+function floodFill(startX, startY, newTile) {
+    const targetTile = mapData[startY * mapW + startX];
+    if (targetTile === newTile) return;
+
+    const stack = [[startX, startY]];
+    while (stack.length > 0) {
+        const [x, y] = stack.pop();
+        if (x < 0 || x >= mapW || y < 0 || y >= mapH) continue;
+        if (mapData[y * mapW + x] !== targetTile) continue;
+        mapData[y * mapW + x] = newTile;
+        stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+    }
+}
+
+// ══════════════ TOOLBAR ACTIONS ══════════════
+function setMode(m) {
+    mode = m;
+    document.getElementById('sbMode').textContent = m;
+    ['place','fill','pick','erase'].forEach(id => {
+        document.getElementById('mode' + id.charAt(0).toUpperCase() + id.slice(1))
+            .classList.toggle('active', id === m);
+    });
+}
+
+function setZoom() {
+    zoom = parseFloat(document.getElementById('zoom').value);
+    syncMapCanvas();
+    renderMap();
+}
+
+function resizeMap() {
+    const nw = parseInt(document.getElementById('mapWidth').value);
+    const nh = parseInt(document.getElementById('mapHeight').value);
+    if (isNaN(nw) || isNaN(nh) || nw < 3 || nh < 3) return;
+
+    const newData = new Array(nw * nh).fill(11);
+    for (let y = 0; y < Math.min(nh, mapH); y++) {
+        for (let x = 0; x < Math.min(nw, mapW); x++) {
+            newData[y * nw + x] = mapData[y * mapW + x];
+        }
+    }
+    mapW = nw; mapH = nh;
+    mapData = newData;
+    syncMapCanvas();
+    renderMap();
+}
+
+function fillAll() {
+    mapData = new Array(mapW * mapH).fill(selectedTile);
+    renderMap();
+    updateStats();
+}
+
+function clearMap() {
+    if (!confirm('Clear the entire map?')) return;
+    mapData = new Array(mapW * mapH).fill(0);
+    renderMap();
+    updateStats();
+}
+
+// ══════════════ WALKABLE TOGGLE ══════════════
+function toggleWalkable(tid) {
+    if (walkableTiles.has(tid)) walkableTiles.delete(tid);
+    else walkableTiles.add(tid);
+    updateWalkableUI();
+}
+
+function toggleWalkableCurrent() {
+    toggleWalkable(selectedTile);
+    updateSelectedTileUI();
+    drawPalette(1.8);
+    renderMap();
+}
+
+function updateWalkableUI() {
+    const sorted = [...walkableTiles].sort((a,b)=>a-b);
+    document.getElementById('walkableList').textContent = sorted.join(', ');
+    updateStats();
+    renderMap();
+    drawPalette(1.8);
+}
+
+function updateSelectedTileUI() {
+    const isWalk = walkableTiles.has(selectedTile);
+
+    document.getElementById('selTileId').textContent   = selectedTile;
+    document.getElementById('selWalkable').textContent = isWalk ? 'YES' : 'NO';
+    document.getElementById('selWalkable').className   = isWalk ? 'yes' : 'no';
+
+    document.getElementById('rSelId').textContent      = selectedTile;
+    document.getElementById('rSelWalk').textContent    = isWalk ? 'Walkable' : 'Wall';
+    document.getElementById('rSelWalk').style.color    = isWalk ? '#a6e3a1' : '#f38ba8';
+
+    // mini preview
+    const pc = document.getElementById('selected-tile-preview');
+    const pctx = pc.getContext('2d');
+    pctx.imageSmoothingEnabled = false;
+    pctx.clearRect(0, 0, 32, 32);
+    const si = selectedTile - 1;
+    const sx = (si % TILESET_COLS) * TILE_W;
+    const sy = Math.floor(si / TILESET_COLS) * TILE_H;
+    pctx.drawImage(tilesetImg, sx, sy, TILE_W, TILE_H, 0, 0, 32, 32);
+
+    updateWalkableUI();
+}
+
+// ══════════════ UNITS ══════════════
+function renderUnits() {
+    const list = document.getElementById('units-list');
+    list.innerHTML = '';
+    units.forEach((u, i) => {
+        const row = document.createElement('div');
+        row.className = 'unit-row';
+        row.innerHTML = `
+            <select onchange="units[${i}].type=this.value">
+                <option value="dwarf"    ${u.type==='dwarf'    ?'selected':''}>dwarf</option>
+                <option value="minotaur" ${u.type==='minotaur' ?'selected':''}>minotaur</option>
+            </select>
+            <button class="danger" onclick="removeUnit(${i})">✕</button>
+        `;
+        list.appendChild(row);
+    });
+    document.getElementById('statUnits').textContent = units.length;
+}
+
+function addUnit() {
+    units.push({ type: document.getElementById('newUnitType').value });
+    renderUnits();
+}
+
+function removeUnit(i) {
+    units.splice(i, 1);
+    renderUnits();
+}
+
+// ══════════════ STATS ══════════════
+function updateStats() {
+    const floor = mapData.filter(t => walkableTiles.has(t)).length;
+    const wall  = mapData.filter(t => t > 0 && !walkableTiles.has(t)).length;
+    document.getElementById('statFloor').textContent = floor;
+    document.getElementById('statWall').textContent  = wall;
+    document.getElementById('statSize').textContent  = `${mapW}×${mapH}`;
+    document.getElementById('statUnits').textContent = units.length;
+
+    const sorted = [...walkableTiles].sort((a,b)=>a-b);
+    document.getElementById('walkableList').textContent = sorted.join(', ');
+}
+
+// ══════════════ EXPORT ══════════════
+function buildMapJson() {
+    const name = document.getElementById('mapName').value || 'map';
+    const tilemap = 'basic/basic.json';
+
+    return {
+        name: name,
+        tilemap: tilemap,
+        openTiles: [...walkableTiles].sort((a,b)=>a-b),
+        units: units.map(u => ({ type: u.type }))
+    };
+}
+
+function buildTilemapJson() {
+    return {
+        height: mapH,
+        infinite: false,
+        layers: [{
+            data: mapData.map(t => t === 0 ? 11 : t),
+            height: mapH,
+            id: 1,
+            name: 'Tile Layer 1',
+            opacity: 1,
+            type: 'tilelayer',
+            visible: true,
+            width: mapW,
+            x: 0,
+            y: 0
+        }],
+        nextlayerid: 2,
+        nextobjectid: 1,
+        orientation: 'orthogonal',
+        renderorder: 'right-down',
+        tiledversion: '1.2.1',
+        tileheight: 32,
+        tilesets: [{
+            columns: 9,
+            firstgid: 1,
+            image: 'tileset_complet.png',
+            imageheight: 288,
+            imagewidth: 288,
+            margin: 0,
+            name: 'tileset_complet',
+            spacing: 0,
+            tilecount: 81,
+            tileheight: 32,
+            tilewidth: 32
+        }],
+        tilewidth: 32,
+        type: 'map',
+        version: 1.2,
+        width: mapW
+    };
+}
+
+function previewSave() {
+    const name = document.getElementById('mapName').value || 'map';
+    document.getElementById('exportName').value = name;
+    const mapJson = buildMapJson();
+    document.getElementById('jsonPreview').textContent = JSON.stringify(mapJson, null, 2);
+    document.getElementById('modal-overlay').classList.add('show');
+    document.getElementById('saveMsg').textContent = '';
+}
+
+function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('show');
+}
+
+function downloadJson() {
+    const name = document.getElementById('exportName').value || 'map';
+
+    // Download the map descriptor JSON
+    triggerDownload(JSON.stringify(buildMapJson(), null, 2), `${name}.json`, 'application/json');
+
+    // Also download the tilemap JSON
+    triggerDownload(JSON.stringify(buildTilemapJson(), null, 2), `${name}-tilemap.json`, 'application/json');
+}
+
+function triggerDownload(content, filename, mime) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([content], { type: mime }));
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+async function saveToServer() {
+    const name = (document.getElementById('exportName').value || 'map').replace(/[^a-z0-9_\-]/gi, '_');
+    const msg  = document.getElementById('saveMsg');
+    msg.textContent = 'Saving…';
+    msg.style.color = '#cdd6f4';
+
+    try {
+        const res = await fetch('/api/maps/save-editor-map', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filename: name,
+                mapDescriptor: buildMapJson(),
+                tilemapData: buildTilemapJson()
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Save failed');
+
+        msg.textContent = `✔ Saved as "${name}"`;
+        msg.style.color = '#a6e3a1';
+    } catch (e) {
+        msg.textContent = `✘ ${e.message}`;
+        msg.style.color = '#f38ba8';
+    }
+}
+
+// ══════════════ BOOT ══════════════
+updateSelectedTileUI();
+renderUnits();
+</script>
+</body>
+</html>

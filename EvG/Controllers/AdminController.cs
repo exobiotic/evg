@@ -67,6 +67,11 @@ namespace EvG.Controllers
             if (config.MapHeight != null)
                 _gameEngine.GameConfig.MapHeight = (int)config.MapHeight;
 
+            if (config.RandomMap == true)
+                _gameEngine.GameConfig.FixedMap = null;
+            else if (config.FixedMap != null)
+                _gameEngine.GameConfig.FixedMap = config.FixedMap;
+
             return Ok();
         }
 

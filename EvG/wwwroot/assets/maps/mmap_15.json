@@ -1,0 +1,27 @@
+{
+  "name": "mmap_15",
+  "tilemap": "mmap_15/mmap_15.json",
+  "openTiles": [
+    11
+  ],
+  "units": [
+    {
+      "type": "dwarf"
+    },
+    {
+      "type": "dwarf"
+    },
+    {
+      "type": "dwarf"
+    },
+    {
+      "type": "minotaur"
+    },
+    {
+      "type": "minotaur"
+    },
+    {
+      "type": "minotaur"
+    }
+  ]
+}

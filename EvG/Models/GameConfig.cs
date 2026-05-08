@@ -18,5 +18,7 @@ namespace EvG.Models
         public int RematchCount { get; set; } = 1;
         public int MapWidth { get; set; } = 10;
         public int MapHeight { get; set; } = 10;
+        /// <summary>Null = pick a random map each game. Non-null = always use this map name.</summary>
+        public string? FixedMap { get; set; } = null;
     }
 }

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .tile-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            gap: 5px;
+            margin-top: 10px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+
+        .tile-option {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            background: white;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .tile-option:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        .tile-option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .preview {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .preview.show {
+            display: block;
+        }
+
+        .preview h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .preview-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-left: 4px solid #667eea;
+        }
+
+        .preview-item strong {
+            color: #667eea;
+        }
+
+        .available-maps {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+
+        .available-maps h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .maps-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .map-item {
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .map-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .spinner {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info {
+            background: #e7f3ff;
+            color: #004085;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #0066cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ Map Generator</h1>
+            <p>Create custom maps for your game</p>
+        </div>
+
+        <div class="content">
+            <div class="info">
+                <strong>ℹ️ Info:</strong> Generate maps by setting dimensions, selecting walkable tiles, and specifying the number of units.
+            </div>
+
+            <form id="mapForm">
+                <div class="form-group">
+                    <label for="mapName">Map Name:</label>
+                    <input type="text" id="mapName" value="Generated Map" placeholder="Enter map name">
+                </div>
+
+                <div class="form-group">
+                    <label>Dimensions:</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label for="width" style="font-size: 0.9em; margin-bottom: 5px;">Width:</label>
+                            <input type="number" id="width" min="5" max="50" value="15">
+                        </div>
+                        <div>
+                            <label for="height" style="font-size: 0.9em; margin-bottom: 5px;">Height:</label>
+                            <input type="number" id="height" min="5" max="50" value="15">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Walkable Tiles (click to select):</label>
+                    <div class="tile-selector" id="walkableTiles"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Non-Walkable Tiles (click to select):</label>
+                    <div class="tile-selector" id="nonWalkableTiles"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="numUnits">Number of Units:</label>
+                    <input type="number" id="numUnits" min="0" max="100" value="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="unitTypes">Unit Types (comma-separated):</label>
+                    <input type="text" id="unitTypes" value="dwarf, minotaur" placeholder="e.g., dwarf, minotaur, archer">
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn-primary" onclick="generateMap()">
+                        <span class="loading" id="loadingSpinner"><div class="spinner"></div> Generating...</span>
+                        <span id="generateText">Generate Map</span>
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="resetForm()">Reset</button>
+                </div>
+            </form>
+
+            <div class="message" id="message"></div>
+
+            <div class="preview" id="preview">
+                <h3>Map Preview</h3>
+                <div id="previewContent"></div>
+                <button type="button" class="btn-primary" onclick="saveMap()" style="margin-top: 15px; width: 100%;">
+                    Save Map to Server
+                </button>
+            </div>
+
+            <div class="available-maps" id="availableMapsSection" style="display: none;">
+                <h3>Available Maps</h3>
+                <div class="maps-list" id="mapsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentGeneratedMap = null;
+        const allTiles = Array.from({length: 81}, (_, i) => i + 1);
+        const defaultWalkable = [11];
+        const defaultNonWalkable = [1, 2, 3, 4, 5, 10, 12, 13, 14, 19, 20, 21];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeTileSelectors();
+            loadAvailableMaps();
+        });
+
+        function initializeTileSelectors() {
+            const walkableContainer = document.getElementById('walkableTiles');
+            const nonWalkableContainer = document.getElementById('nonWalkableTiles');
+
+            allTiles.forEach(tile => {
+                const walkableBtn = createTileButton(tile, defaultWalkable.includes(tile), 'walkable');
+                const nonWalkableBtn = createTileButton(tile, defaultNonWalkable.includes(tile), 'nonwalkable');
+                walkableContainer.appendChild(walkableBtn);
+                nonWalkableContainer.appendChild(nonWalkableBtn);
+            });
+        }
+
+        function createTileButton(tile, isSelected, type) {
+            const btn = document.createElement('div');
+            btn.className = `tile-option ${isSelected ? 'selected' : ''}`;
+            btn.textContent = tile;
+            btn.dataset.tile = tile;
+            btn.dataset.type = type;
+            btn.onclick = () => toggleTile(btn);
+            return btn;
+        }
+
+        function toggleTile(element) {
+            element.classList.toggle('selected');
+        }
+
+        function getSelectedTiles(type) {
+            const tiles = document.querySelectorAll(`.tile-option[data-type="${type}"].selected`);
+            return Array.from(tiles).map(t => parseInt(t.dataset.tile)).sort((a, b) => a - b);
+        }
+
+        async function generateMap() {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const generateText = document.getElementById('generateText');
+            const message = document.getElementById('message');
+
+            generateText.style.display = 'none';
+            loadingSpinner.style.display = 'flex';
+
+            try {
+                const walkableTiles = getSelectedTiles('walkable');
+                const nonWalkableTiles = getSelectedTiles('nonwalkable');
+
+                if (walkableTiles.length === 0) {
+                    throw new Error('At least one walkable tile must be selected');
+                }
+
+                const input = {
+                    name: document.getElementById('mapName').value,
+                    width: parseInt(document.getElementById('width').value),
+                    height: parseInt(document.getElementById('height').value),
+                    walkableTiles: walkableTiles,
+                    nonWalkableTiles: nonWalkableTiles,
+                    numUnits: parseInt(document.getElementById('numUnits').value),
+                    unitTypes: document.getElementById('unitTypes').value.split(',').map(s => s.trim())
+                };
+
+                const response = await fetch('/api/maps/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(input)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to generate map');
+                }
+
+                currentGeneratedMap = data;
+                showMessage('Map generated successfully!', 'success');
+                displayPreview(data);
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                loadingSpinner.style.display = 'none';
+                generateText.style.display = 'inline';
+            }
+        }
+
+        function displayPreview(map) {
+            const previewContent = document.getElementById('previewContent');
+            const preview = document.getElementById('preview');
+
+            let unitsHtml = '';
+            if (map.units && map.units.length > 0) {
+                unitsHtml = map.units.map(u => `<li>${u.type}</li>`).join('');
+            }
+
+            previewContent.innerHTML = `
+                <div class="preview-item"><strong>Name:</strong> ${map.name}</div>
+                <div class="preview-item"><strong>Tilemap:</strong> ${map.tilemap}</div>
+                <div class="preview-item"><strong>Walkable Tiles:</strong> ${map.openTiles.join(', ')}</div>
+                <div class="preview-item"><strong>Units (${map.units.length}):</strong> <ul style="margin-left: 20px;">${unitsHtml || '<li>None</li>'}</ul></div>
+            `;
+
+            preview.classList.add('show');
+        }
+
+        async function saveMap() {
+            if (!currentGeneratedMap) {
+                showMessage('No map to save', 'error');
+                return;
+            }
+
+            try {
+                const input = {
+                    name: currentGeneratedMap.name,
+                    width: parseInt(document.getElementById('width').value),
+                    height: parseInt(document.getElementById('height').value),
+                    walkableTiles: currentGeneratedMap.openTiles,
+                    nonWalkableTiles: getSelectedTiles('nonwalkable'),
+                    numUnits: currentGeneratedMap.units.length,
+                    unitTypes: Array.from(new Set(currentGeneratedMap.units.map(u => u.type)))
+                };
+
+                const response = await fetch('/api/maps/generate-and-save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(input)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to save map');
+                }
+
+                showMessage(`Map saved successfully as "${data.filename}"!`, 'success');
+                loadAvailableMaps();
+            } catch (error) {
+                showMessage(error.message, 'error');
+            }
+        }
+
+        async function loadAvailableMaps() {
+            try {
+                const response = await fetch('/api/maps/list');
+                const data = await response.json();
+
+                if (data.maps && data.maps.length > 0) {
+                    const mapsList = document.getElementById('mapsList');
+                    mapsList.innerHTML = '';
+                    data.maps.forEach(map => {
+                        const div = document.createElement('div');
+                        div.className = 'map-item';
+                        div.textContent = map;
+                        mapsList.appendChild(div);
+                    });
+                    document.getElementById('availableMapsSection').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to load maps:', error);
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('mapForm').reset();
+            document.getElementById('preview').classList.remove('show');
+            document.getElementById('message').classList.remove('success', 'error');
+            currentGeneratedMap = null;
+
+            // Reset tile selection
+            document.querySelectorAll('.tile-option').forEach(tile => {
+                const tileNum = parseInt(tile.dataset.tile);
+                const type = tile.dataset.type;
+                const shouldBeSelected = (type === 'walkable' && defaultWalkable.includes(tileNum)) ||
+                                        (type === 'nonwalkable' && defaultNonWalkable.includes(tileNum));
+                tile.classList.toggle('selected', shouldBeSelected);
+            });
+        }
+
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = `message ${type}`;
+        }
+    </script>
+</body>
+</html>
