@@ -93,8 +93,8 @@ namespace EvG.Controllers
             {
                 var fixedMap = GameEngine.GameConfig.FixedMap;
                 var spec = !string.IsNullOrWhiteSpace(fixedMap)
-                    ? new GameSpec(fixedMap)
-                    : new GameSpec();
+                    ? new GameSpec(fixedMap, GameEngine.GameConfig)
+                    : new GameSpec(GameEngine.GameConfig);
                 GameEngine.NewGame(spec);
             }
             if (action == "start")

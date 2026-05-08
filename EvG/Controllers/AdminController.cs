@@ -18,6 +18,12 @@ namespace EvG.Controllers
             _gameEngine = gameEngine;
         }
 
+        [HttpGet("api/[controller]/game-config")]
+        public ActionResult<GameConfig> GetGameConfig()
+        {
+            return Ok(_gameEngine.GameConfig);
+        }
+
         [HttpPost("api/[controller]/update-score")]
         public ActionResult UpdateScore([FromBody]RemotePlayer player)
         {
@@ -50,13 +56,22 @@ namespace EvG.Controllers
                 _gameEngine.GameConfig.RandomOrder = (bool)config.RandomOrder;
 
             if (config.StaticOrder != null)
-                _gameEngine.GameConfig.RandomOrder = (bool)config.StaticOrder;
+                _gameEngine.GameConfig.StaticOrder = (bool)config.StaticOrder;
 
             if (config.TournamentMode != null)
                 _gameEngine.GameConfig.TournamentMode = (bool)config.TournamentMode;
 
             if (config.PlayerTimeout != null)
+            {
+                _gameEngine.GameConfig.PlayerTimeout = (float)config.PlayerTimeout;
                 _gameEngine.SetPlayerTimeout((float)config.PlayerTimeout);
+            }
+
+            if (config.UnitHealth != null)
+                _gameEngine.GameConfig.UnitHealth = Math.Max(1, (int)config.UnitHealth);
+
+            if (config.AttackDamage != null)
+                _gameEngine.GameConfig.AttackDamage = Math.Max(1, (int)config.AttackDamage);
 
             if (config.RematchCount != null)
                 _gameEngine.GameConfig.RematchCount = (int)config.RematchCount;

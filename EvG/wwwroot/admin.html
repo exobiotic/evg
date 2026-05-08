@@ -293,6 +293,18 @@
                         <div class="current-value" id="playerTimeoutValue"></div>
                     </div>
 
+                    <div class="form-group">
+                        <label for="unitHealth">Unit Health</label>
+                        <input type="number" id="unitHealth" min="1" max="100" step="1" placeholder="9">
+                        <div class="current-value" id="unitHealthValue"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="attackDamage">Attack Damage</label>
+                        <input type="number" id="attackDamage" min="1" max="100" step="1" placeholder="3">
+                        <div class="current-value" id="attackDamageValue"></div>
+                    </div>
+
                     <button onclick="applySettings()">Apply Settings</button>
                     <div class="status" id="timingStatus"></div>
                 </div>
@@ -515,11 +527,15 @@
             const actionDelay = document.getElementById('actionDelay').value;
             const gameValue = document.getElementById('gameValue').value;
             const playerTimeout = document.getElementById('playerTimeout').value;
+            const unitHealth = document.getElementById('unitHealth').value;
+            const attackDamage = document.getElementById('attackDamage').value;
             const rematchCount = document.getElementById('rematchCount').value;
 
             if (actionDelay) config.actionDelay = parseInt(actionDelay);
             if (gameValue) config.gameValue = parseInt(gameValue);
             if (playerTimeout) config.playerTimeout = parseFloat(playerTimeout);
+            if (unitHealth) config.unitHealth = parseInt(unitHealth);
+            if (attackDamage) config.attackDamage = parseInt(attackDamage);
             if (rematchCount) config.rematchCount = parseInt(rematchCount);
 
             // Boolean settings
@@ -576,12 +592,59 @@
 
         async function loadCurrentConfig() {
             try {
-                // Since there's no GET endpoint for config, we'll show placeholder values
-                // In a real scenario, you might want to add a GET endpoint for game state
-                console.log('Config loaded (values shown are fields, not current server state)');
+                const response = await fetch('/api/admin/game-config');
+                if (!response.ok) {
+                    throw new Error('Failed to load config');
+                }
+
+                const config = await response.json();
+
+                setNumberValue('actionDelay', config.actionDelay, `${config.actionDelay} ms`);
+                setNumberValue('gameValue', config.gameValue, `${config.gameValue} pt`);
+                setNumberValue('playerTimeout', config.playerTimeout, `${config.playerTimeout} s`);
+                setNumberValue('unitHealth', config.unitHealth, `${config.unitHealth} hp`);
+                setNumberValue('attackDamage', config.attackDamage, `${config.attackDamage} dmg`);
+                setNumberValue('mapWidth', config.mapWidth, `fixed (${config.mapWidth})`);
+                setNumberValue('mapHeight', config.mapHeight, `fixed (${config.mapHeight})`);
+                setNumberValue('rematchCount', config.rematchCount, `${config.rematchCount}x per pairing`);
+
+                setToggleState('forceMove', !!config.forceMove);
+                setToggleState('bloodLust', !!config.bloodLust);
+                setToggleState('fog', !!config.fog);
+                setToggleState('randomOrder', !!config.randomOrder);
+                setToggleState('staticOrder', !!config.staticOrder);
+                setToggleState('tournamentMode', !!config.tournamentMode);
+                refreshToggleCurrentValues();
+
+                const fixedMap = config.fixedMap || '';
+                document.getElementById('mapModeFixed').checked = !!fixedMap;
+                document.getElementById('mapModeRandom').checked = !fixedMap;
+                document.getElementById('fixedMapGroup').style.display = fixedMap ? 'block' : 'none';
+                document.getElementById('mapModeValue').textContent = 'Current: ' + (fixedMap ? `Fixed: ${fixedMap}` : 'Random');
+                document.getElementById('fixedMapValue').textContent = fixedMap ? 'Active: ' + fixedMap : '';
+
+                if (fixedMap) {
+                    await refreshMapList();
+                    document.getElementById('fixedMapSelect').value = fixedMap;
+                }
             } catch (error) {
                 console.error('Error loading config:', error);
+                showStatus('error', 'Unable to load current config', 'mapSelectionStatus');
             }
+        }
+
+        function setToggleState(id, isActive) {
+            const el = document.getElementById(id);
+            el.classList.toggle('active', isActive);
+        }
+
+        function setNumberValue(id, value, label) {
+            const el = document.getElementById(id);
+            if (el && value !== undefined && value !== null) {
+                el.value = value;
+            }
+
+            updateCurrentValue(id, label);
         }
 
         function showStatus(type, message, elementId = 'timingStatus') {
@@ -656,14 +719,6 @@
             }
         }
 
-        // Initial placeholder values (in a real system, fetch from server)
-        updateCurrentValue('actionDelay', '400 ms');
-        updateCurrentValue('gameValue', '1 pt');
-        updateCurrentValue('playerTimeout', '1.0 s');
-        updateCurrentValue('mapWidth', 'fixed (10)');
-        updateCurrentValue('mapHeight', 'fixed (10)');
-        updateCurrentValue('tournamentMode', 'ON');
-        updateCurrentValue('rematchCount', '1x per pairing');
         refreshToggleCurrentValues();
     </script>
 </body>

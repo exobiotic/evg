@@ -23,9 +23,13 @@ namespace EvG.Models
         public bool Active { get; set; }
         private HashSet<int> openTileIds = new HashSet<int>();
 
-        public GameSpec() : this(GetRandomMap()) { }
+        public GameSpec() : this(GetRandomMap(), new GameConfig()) { }
 
-        public GameSpec(string map)
+        public GameSpec(GameConfig gameConfig) : this(GetRandomMap(), gameConfig) { }
+
+        public GameSpec(string map) : this(map, new GameConfig()) { }
+
+        public GameSpec(string map, GameConfig gameConfig)
         {
             using (StreamReader reader = new StreamReader(MapBase + map + ".json"))
             using (var jsonReader = new JsonTextReader(reader))
@@ -35,7 +39,7 @@ namespace EvG.Models
                 Name = game.name;
                 Tilemap = $"/assets/maps/{game.tilemap}";
                 CreateMap(serializer, game);
-                CreateUnits(game);
+                CreateUnits(game, gameConfig);
             }
         }
 
@@ -69,7 +73,7 @@ namespace EvG.Models
             }
         }
 
-        private void CreateUnits(dynamic game)
+        private void CreateUnits(dynamic game, GameConfig gameConfig)
         {
             var random = new Random();
             int width = Map.width;
@@ -81,7 +85,9 @@ namespace EvG.Models
                 var unit = game.units[i];
                 Units[i] = new Unit()
                 {
-                    Type = game.units[i].type
+                    Type = game.units[i].type,
+                    Health = Math.Max(1, gameConfig.UnitHealth),
+                    Power = Math.Max(1, gameConfig.AttackDamage)
                 };
 
                 int x = random.Next(0, width);

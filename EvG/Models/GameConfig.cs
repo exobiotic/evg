@@ -9,6 +9,9 @@ namespace EvG.Models
     {
         public int ActionDelay { get; set; } = 400;
         public int GameValue { get; set; } = 1;
+        public float PlayerTimeout { get; set; } = 1.0f;
+        public int UnitHealth { get; set; } = 9;
+        public int AttackDamage { get; set; } = 3;
         public bool ForceMove { get; set; }
         public bool BloodLust { get; set; }
         public bool Fog { get; set; }

@@ -17,6 +17,9 @@ namespace Tests
             var engine = new GameEngine();
             Assert.AreEqual(1, engine.GameConfig.GameValue);
             Assert.AreEqual(400, engine.GameConfig.ActionDelay);
+            Assert.AreEqual(1.0f, engine.GameConfig.PlayerTimeout);
+            Assert.AreEqual(9, engine.GameConfig.UnitHealth);
+            Assert.AreEqual(3, engine.GameConfig.AttackDamage);
             Assert.IsFalse(engine.GameConfig.Fog);
             Assert.IsFalse(engine.GameConfig.BloodLust);
             Assert.IsFalse(engine.GameConfig.ForceMove);
