@@ -134,7 +134,7 @@
     <div class="card-body">
       <table>
         <tr><th>Action (body)</th><th>Effect</th><th>Requires</th></tr>
-        <tr><td><code>"new"</code></td><td>Create a new game — picks 2 players at random from the player pool, loads a random map, places units. In tournament mode this call becomes a no-op after all unique player pairs have played.</td><td>≥ 2 players registered</td></tr>
+        <tr><td><code>"new"</code></td><td>Create a new game — picks 2 players at random from the player pool, loads a map (random <em>or</em> fixed, see Map Selection below), places units. In tournament mode this call becomes a no-op after all unique player pairs have played.</td><td>≥ 2 players registered</td></tr>
         <tr><td><code>"start"</code></td><td>Start the game loop — units begin acting every <em>ActionDelay</em> ms</td><td>Game created first</td></tr>
       </table>
       <div class="note">Both calls return <code>200 OK</code> with empty body. Send <code>Content-Type: application/json</code>. If tournament pairings are complete, <code>"new"</code> still returns 200 but does not create another match.</div>
@@ -177,16 +177,22 @@ POST /api/admin/tournament-reset</div>
         <tr><td><code>mapWidth</code></td><td>int</td><td class="tag tag-def">10</td><td>Battle map width in tiles</td></tr>
         <tr><td><code>mapHeight</code></td><td>int</td><td class="tag tag-def">10</td><td>Battle map height in tiles</td></tr>
         <tr><td><code>rematchCount</code></td><td>int</td><td class="tag tag-def">1</td><td>Number of times each player pair must play before tournament is complete</td></tr>
+        <tr><td><code>fixedMap</code></td><td>string</td><td class="tag tag-def">null</td><td>Name of a specific map to use every game (e.g. <code>"my_map"</code>). Must match a file in <code>wwwroot/assets/maps/</code></td></tr>
+        <tr><td><code>randomMap</code></td><td>bool</td><td class="tag tag-def">—</td><td>Set to <code>true</code> to clear any fixed map and return to random selection</td></tr>
       </table>
       <p style="margin-top:6px; font-size:10.5px; color:#555;">All fields are <span class="tag tag-opt">optional</span> — only send what you want to change. Takes effect on the <em>next</em> game created.</p>
       <div class="json-block">
-<span class="cmt">// Example — larger 15x15 map with 3 rematches per pairing</span>
+<span class="cmt">// Pin a specific map for every game</span>
 PUT /api/admin/game-config
-{
-  <span class="key">"mapWidth"</span>: <span class="num">15</span>,
-  <span class="key">"mapHeight"</span>: <span class="num">15</span>,
-  <span class="key">"rematchCount"</span>: <span class="num">3</span>
-}</div>
+{ <span class="key">"fixedMap"</span>: <span class="str">"my_map"</span> }
+
+<span class="cmt">// Switch back to random maps</span>
+PUT /api/admin/game-config
+{ <span class="key">"randomMap"</span>: <span class="bool">true</span> }
+
+<span class="cmt">// 3 rematches per pairing</span>
+PUT /api/admin/game-config
+{ <span class="key">"rematchCount"</span>: <span class="num">3</span> }</div>
     </div>
   </div>
 
@@ -231,6 +237,33 @@ data: {<span class="key">"type"</span>:<span class="str">"player-updated"</span>
     </div>
   </div>
 
+  <!-- ── MAP MANAGEMENT ── -->
+  <div class="card full">
+    <div class="card-header"><span class="icon">🗺️</span> Map Management</div>
+    <div class="card-body">
+      <table>
+        <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/maps/list</code></td><td>Returns <code>{"maps":[...]}</code> — names of all available map descriptor files</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/maps/load/{name}</code></td><td>Load and return a named map descriptor JSON</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/maps/generate</code></td><td>Generate a random map in memory (not saved) — returns map descriptor JSON</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/maps/generate-and-save</code></td><td>Generate a random map <em>and</em> save it to <code>wwwroot/assets/maps/</code></td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/maps/save-editor-map</code></td><td>Save a hand-drawn map from the map editor (descriptor + tilemap JSON)</td></tr>
+      </table>
+      <div class="json-block">
+<span class="cmt">// Generate body (all fields optional — shown with defaults)</span>
+{
+  <span class="key">"name"</span>:            <span class="str">"Generated Map"</span>,
+  <span class="key">"width"</span>:           <span class="num">15</span>,
+  <span class="key">"height"</span>:          <span class="num">15</span>,
+  <span class="key">"walkableTiles"</span>:   [<span class="num">11</span>],
+  <span class="key">"nonWalkableTiles"</span>:[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">10</span>,<span class="num">12</span>,<span class="num">19</span>,<span class="num">20</span>,<span class="num">21</span>],
+  <span class="key">"numUnits"</span>:        <span class="num">6</span>,
+  <span class="key">"unitTypes"</span>:       [<span class="str">"dwarf"</span>, <span class="str">"minotaur"</span>]
+}</div>
+      <div class="note">Maps are stored in <code>wwwroot/assets/maps/</code>. Each map has a top-level <code>&lt;name&gt;.json</code> descriptor and a subfolder with the tilemap grid JSON and tileset PNG. Use the <strong>Map Editor</strong> at <code>/map-editor.html</code> or the <strong>Map Generator</strong> at <code>/map-generator.html</code> to create maps visually.</div>
+    </div>
+  </div>
+
   <!-- ── QUERY ENDPOINTS ── -->
   <div class="card">
     <div class="card-header"><span class="icon">🔍</span> Query Endpoints</div>
@@ -264,6 +297,14 @@ curl -X PUT http://localhost:5000/api/admin/game-config \
   -H "Content-Type: application/json" \
   -d '{"actionDelay":600}'
 
+<span class="cmt"># Pin a fixed map</span>
+curl -X PUT http://localhost:5000/api/admin/game-config \
+  -H "Content-Type: application/json" \
+  -d '{"fixedMap":"my_map"}'
+
+<span class="cmt"># List available maps</span>
+curl http://localhost:5000/api/maps/list
+
 <span class="cmt"># PowerShell — register a player</span>
 Invoke-RestMethod -Uri http://localhost:5000/api/players `
   -Method POST -ContentType "application/json" `
@@ -273,6 +314,6 @@ Invoke-RestMethod -Uri http://localhost:5000/api/players `
 
 </div>
 
-<footer>EvG Admin Cheat Sheet &nbsp;·&nbsp; .NET 8 &nbsp;·&nbsp; localhost:5000 (http) / localhost:5001 (https)</footer>
+<footer>EvG Admin Cheat Sheet &nbsp;·&nbsp; .NET 8 &nbsp;·&nbsp; localhost:5000 (http) / localhost:5001 (https) &nbsp;·&nbsp; Map Editor: <strong>/map-editor.html</strong> &nbsp;·&nbsp; Map Generator: <strong>/map-generator.html</strong></footer>
 </body>
 </html>

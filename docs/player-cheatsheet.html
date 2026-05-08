@@ -252,16 +252,17 @@
   <div class="card">
     <div class="card-header"><span class="icon">🗺️</span> Map — floorMap Layout</div>
     <div class="card-body">
-      <p style="font-size:10.5px;margin-bottom:6px;"><code>floorMap[x][y]</code> — column-first indexing. <code>true</code> = passable floor.</p>
+      <p style="font-size:10.5px;margin-bottom:6px;"><code>floorMap[x][y]</code> — column-first indexing. <code>true</code> = passable floor. Map dimensions vary per match (admin selects the map).</p>
       <div class="json-block">
 <span class="cmt">// Check if tile to the right is walkable</span>
 const canMoveRight = floorMap[unit.x + 1]?.[unit.y] === true;
 
-<span class="cmt">// Check if tile is within bounds (10×10 map)</span>
+<span class="cmt">// Check bounds — always derive size from floorMap itself</span>
+const mapW = floorMap.length;
+const mapH = floorMap[0]?.length ?? 0;
 const inBounds = (x, y) =>
   x >= 0 &amp;&amp; y >= 0 &amp;&amp;
-  x &lt; floorMap.length &amp;&amp;
-  y &lt; floorMap[x].length;
+  x &lt; mapW &amp;&amp; y &lt; mapH;
 
 <span class="cmt">// Find all walkable neighbours</span>
 const dirs = [{dx:0,dy:-1},{dx:0,dy:1},

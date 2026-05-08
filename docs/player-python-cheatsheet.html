@@ -455,9 +455,9 @@ def get_actions(state):
         elif direction == "Right":
             x += 1
         
-        # Check bounds and emptiness
+        # Check bounds and emptiness (derive size from floor_map — map dimensions vary per match)
         if 0 <= x < len(state.floor_map) and \
-           0 <= y < len(state.floor_map[0]) and \
+           0 <= y < len(state.floor_map[x]) and \
            is_empty(x, y, state):
             return [Action("Move", direction)]
     
