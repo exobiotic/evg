@@ -7,7 +7,7 @@ namespace EvG.Models
 {
     public class AttackEventArgs: EventArgs
     {
-        public Unit Unit;
-        public Unit Target;
+        public Unit? Unit;
+        public Unit? Target;
     }
 }

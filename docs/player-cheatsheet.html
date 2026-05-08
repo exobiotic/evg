@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>EvG – Player Cheat Sheet</title>
+  <style>
+    @page { size: A4; margin: 15mm 18mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #1a1a2e; background: #fff; }
+
+    header {
+      background: linear-gradient(135deg, #0d2137 0%, #0a3d62 60%, #1e5f74 100%);
+      color: #00d2d3;
+      padding: 14px 20px 10px;
+      border-radius: 6px;
+      margin-bottom: 14px;
+      display: flex; align-items: flex-end; justify-content: space-between;
+    }
+    header h1 { font-size: 26px; letter-spacing: 2px; color: #00d2d3; }
+    header .sub { font-size: 11px; color: #a8d8ea; margin-top: 2px; }
+    header .badge { background: #00d2d3; color: #0d2137; border-radius: 4px; padding: 3px 10px; font-size: 11px; font-weight: bold; letter-spacing: 1px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .full { grid-column: 1 / -1; }
+
+    .card { border: 1.5px solid #dee3f0; border-radius: 6px; overflow: hidden; }
+    .card-header {
+      background: #0a3d62;
+      color: #e0f4ff;
+      padding: 6px 12px;
+      font-weight: bold;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .card-header .icon { font-size: 14px; }
+    .card-body { padding: 10px 12px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: #e8f4fd;
+      color: #0a3d62;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 4px 8px;
+      text-align: left;
+      border-bottom: 1.5px solid #b3d4ec;
+    }
+    td { padding: 4px 8px; border-bottom: 1px solid #eef0f8; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f0f8ff; }
+
+    code {
+      background: #0d2137;
+      color: #00d2d3;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: 'Consolas', monospace;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .method {
+      display: inline-block;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 9px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      color: #fff;
+      min-width: 36px;
+      text-align: center;
+    }
+    .get  { background: #2e7d32; }
+    .post { background: #1565c0; }
+
+    .json-block {
+      background: #0d1117;
+      color: #c9d1d9;
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-family: 'Consolas', monospace;
+      font-size: 10.5px;
+      line-height: 1.6;
+      margin-top: 4px;
+    }
+    .json-block .key  { color: #79c0ff; }
+    .json-block .str  { color: #a5d6ff; }
+    .json-block .num  { color: #f97583; }
+    .json-block .bool { color: #ffab70; }
+    .json-block .cmt  { color: #8b949e; font-style: italic; }
+
+    .dir-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 36px);
+      grid-template-rows: repeat(3, 36px);
+      gap: 3px;
+      margin: 6px auto;
+      width: fit-content;
+    }
+    .dir-cell {
+      background: #0a3d62;
+      color: #00d2d3;
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .dir-center { background: #1e5f74; font-size: 9px; color: #a8d8ea; text-align: center; padding: 2px; line-height: 1.2; }
+    .dir-empty { background: transparent; }
+
+    .flow-steps { counter-reset: step; }
+    .flow-step {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px solid #eef0f8;
+    }
+    .flow-step:last-child { border-bottom: none; }
+    .step-num {
+      background: #0a3d62;
+      color: #00d2d3;
+      border-radius: 50%;
+      width: 20px; height: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: bold;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .step-body { flex: 1; font-size: 11px; }
+    .step-body strong { color: #0a3d62; }
+
+    .note { background: #e3f8f8; border-left: 3px solid #00d2d3; padding: 5px 8px; border-radius: 0 4px 4px 0; font-size: 10.5px; margin-top: 6px; }
+    .warn { background: #fff8e1; border-left: 3px solid #f9a825; padding: 5px 8px; border-radius: 0 4px 4px 0; font-size: 10.5px; margin-top: 6px; }
+
+    .tag { display: inline-block; border-radius: 10px; padding: 1px 7px; font-size: 9px; font-weight: bold; margin-left: 4px; }
+    .tag-unit1 { background: #e3f2fd; color: #1565c0; }
+    .tag-unit2 { background: #fce4ec; color: #c62828; }
+
+    footer { margin-top: 14px; text-align: center; color: #8b949e; font-size: 9px; border-top: 1px solid #dee3f0; padding-top: 6px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>EvG</h1>
+    <div class="sub">Evo Game Engine — Player Integration Guide</div>
+  </div>
+  <div class="badge">PLAYER</div>
+</header>
+
+<div class="grid">
+
+  <!-- ── HOW IT WORKS ── -->
+  <div class="card full">
+    <div class="card-header"><span class="icon">🔄</span> Game Flow — How Your Bot Integrates</div>
+    <div class="card-body">
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <div class="step-body"><strong>Register</strong> — POST your bot's <code>id</code>, <code>name</code>, and <code>address</code> to <code>/api/players</code>. The address is the HTTP endpoint the game engine will call <em>on your bot</em>.</div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <div class="step-body"><strong>Wait</strong> — The admin creates a game (<code>POST /api/game "new"</code>). Two players are picked at random. If selected, your bot will start receiving requests.</div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <div class="step-body"><strong>Receive turn request</strong> — The engine POSTs to your <code>address</code> with the game state. You have <strong>1 second</strong> (default) to respond.</div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <div class="step-body"><strong>Respond with actions</strong> — Return a JSON array of action objects. Respond to <strong>every unit</strong> you control per turn, or return <code>[]</code> to pass.</div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">5</div>
+          <div class="step-body"><strong>Game ended callback</strong> — When the game ends, the engine POSTs to <code>address</code> + <code>/game-ended</code> with the result. No response needed.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INCOMING REQUEST ── -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📥</span> Incoming Turn Request (POST to your bot)</div>
+    <div class="card-body">
+      <p style="font-size:10.5px;margin-bottom:6px;">The engine calls <code>POST {your-address}</code> each time one of your units needs to act.</p>
+      <table>
+        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>floorMap</code></td><td>bool[][]</td><td>2-D array — <code>true</code> = walkable tile. Index as <code>[x][y]</code></td></tr>
+        <tr><td><code>unit</code></td><td>Unit</td><td>The unit that must act this turn</td></tr>
+        <tr><td><code>units</code></td><td>Unit[]</td><td>All <em>friendly</em> units (your team)</td></tr>
+        <tr><td><code>foes</code></td><td>Unit[]</td><td>All <em>enemy</em> units visible to you</td></tr>
+      </table>
+      <div class="json-block">
+{
+  <span class="key">"floorMap"</span>: [[<span class="bool">false</span>,<span class="bool">true</span>,...], [<span class="bool">true</span>,<span class="bool">true</span>,...], ...],
+  <span class="key">"unit"</span>: { <span class="key">"id"</span>:<span class="str">"abc"</span>, <span class="key">"type"</span>:<span class="str">"dwarf"</span>,
+             <span class="key">"health"</span>:<span class="num">9</span>, <span class="key">"power"</span>:<span class="num">3</span>,
+             <span class="key">"x"</span>:<span class="num">3</span>, <span class="key">"y"</span>:<span class="num">4</span> },
+  <span class="key">"units"</span>: [ ... ],   <span class="cmt">// your team</span>
+  <span class="key">"foes"</span>:  [ ... ]    <span class="cmt">// enemy team</span>
+}</div>
+    </div>
+  </div>
+
+  <!-- ── UNIT OBJECT ── -->
+  <div class="card">
+    <div class="card-header"><span class="icon">⚔️</span> Unit Object</div>
+    <div class="card-body">
+      <table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>id</code></td><td>string</td><td>Unique GUID for this unit instance</td></tr>
+        <tr><td><code>type</code></td><td>string</td><td><code>"dwarf"</code> or <code>"minotaur"</code></td></tr>
+        <tr><td><code>health</code></td><td>int</td><td>Current HP. Max = <strong>9</strong>. Dead when ≤ 0</td></tr>
+        <tr><td><code>power</code></td><td>int</td><td>Damage dealt per attack. Default = <strong>3</strong></td></tr>
+        <tr><td><code>x</code></td><td>int</td><td>Column (0-based, left→right)</td></tr>
+        <tr><td><code>y</code></td><td>int</td><td>Row (0-based, top→bottom)</td></tr>
+      </table>
+      <div class="note">All units of the same type belong to the same player. You own all units in <code>units[]</code>.</div>
+    </div>
+  </div>
+
+  <!-- ── ACTIONS ── -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🎮</span> Response — Action Array</div>
+    <div class="card-body">
+      <p style="font-size:10.5px;margin-bottom:6px;">Return a JSON array. Each object has a <code>type</code> and a <code>direction</code>.</p>
+      <table>
+        <tr><th>type</th><th>Effect</th></tr>
+        <tr><td><code>"Move"</code></td><td>Move active unit 1 tile in direction</td></tr>
+        <tr><td><code>"Attack"</code></td><td>Attack the unit in the adjacent tile in direction</td></tr>
+      </table>
+      <table style="margin-top:8px">
+        <tr><th>direction</th><th>Tile offset</th></tr>
+        <tr><td><code>"Up"</code></td><td>y − 1</td></tr>
+        <tr><td><code>"Down"</code></td><td>y + 1</td></tr>
+        <tr><td><code>"Left"</code></td><td>x − 1</td></tr>
+        <tr><td><code>"Right"</code></td><td>x + 1</td></tr>
+      </table>
+      <div class="json-block">
+<span class="cmt">// Move up then attack right</span>
+[
+  { <span class="key">"type"</span>: <span class="str">"Move"</span>,   <span class="key">"direction"</span>: <span class="str">"Up"</span> },
+  { <span class="key">"type"</span>: <span class="str">"Attack"</span>, <span class="key">"direction"</span>: <span class="str">"Right"</span> }
+]</div>
+      <div class="warn">Return <code>[]</code> to pass. If you time out, your turn is skipped automatically.</div>
+    </div>
+  </div>
+
+  <!-- ── MAP ── -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🗺️</span> Map — floorMap Layout</div>
+    <div class="card-body">
+      <p style="font-size:10.5px;margin-bottom:6px;"><code>floorMap[x][y]</code> — column-first indexing. <code>true</code> = passable floor.</p>
+      <div class="json-block">
+<span class="cmt">// Check if tile to the right is walkable</span>
+const canMoveRight = floorMap[unit.x + 1]?.[unit.y] === true;
+
+<span class="cmt">// Check if tile is within bounds (10×10 map)</span>
+const inBounds = (x, y) =>
+  x >= 0 &amp;&amp; y >= 0 &amp;&amp;
+  x &lt; floorMap.length &amp;&amp;
+  y &lt; floorMap[x].length;
+
+<span class="cmt">// Find all walkable neighbours</span>
+const dirs = [{dx:0,dy:-1},{dx:0,dy:1},
+              {dx:-1,dy:0},{dx:1,dy:0}];
+const free = dirs.filter(d =>
+  inBounds(unit.x+d.dx, unit.y+d.dy) &amp;&amp;
+  floorMap[unit.x+d.dx][unit.y+d.dy]);</div>
+    </div>
+  </div>
+
+  <!-- ── GAME ENDED ── -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🏁</span> Game Ended Callback (POST to your bot)</div>
+    <div class="card-body">
+      <p style="font-size:10.5px;margin-bottom:6px;">Called at <code>POST {your-address}</code> (same endpoint, different body) when the game finishes.</p>
+      <div class="json-block">
+{
+  <span class="key">"winner"</span>: {           <span class="cmt">// null if draw</span>
+    <span class="key">"id"</span>:    <span class="str">"team-alpha"</span>,
+    <span class="key">"name"</span>:  <span class="str">"Alpha Bot"</span>,
+    <span class="key">"score"</span>: <span class="num">3</span>
+  },
+  <span class="key">"units"</span>: [ ... ],   <span class="cmt">// your surviving units</span>
+  <span class="key">"foes"</span>:  [ ... ]    <span class="cmt">// enemy surviving units</span>
+}</div>
+      <div class="note">Max rounds = <strong>20</strong>. If both teams survive, winner is the team with highest total remaining HP. Tie → <code>winner: null</code>.</div>
+    </div>
+  </div>
+
+  <!-- ── MINIMAL BOT TEMPLATE ── -->
+  <div class="card full">
+    <div class="card-header"><span class="icon">🤖</span> Minimal Bot Template (Node.js / Express)</div>
+    <div class="card-body">
+      <div class="json-block">
+<span class="key">const</span> express = require(<span class="str">'express'</span>);
+<span class="key">const</span> app = express();
+app.use(express.json());
+
+<span class="cmt">// Called each time one of your units needs to act</span>
+app.post(<span class="str">'/'</span>, (req, res) => {
+  <span class="key">const</span> { unit, units, foes, floorMap } = req.body;
+  <span class="key">const</span> actions = [];
+
+  <span class="cmt">// Attack if enemy is adjacent, otherwise move randomly</span>
+  <span class="key">const</span> dirs = [<span class="str">'Up'</span>, <span class="str">'Down'</span>, <span class="str">'Left'</span>, <span class="str">'Right'</span>];
+  <span class="key">const</span> adjacent = { Up:{x:unit.x,y:unit.y-1}, Down:{x:unit.x,y:unit.y+1},
+                     Left:{x:unit.x-1,y:unit.y}, Right:{x:unit.x+1,y:unit.y} };
+
+  <span class="key">const</span> attackDir = dirs.find(d =>
+    foes.some(f => f.x===adjacent[d].x &amp;&amp; f.y===adjacent[d].y &amp;&amp; f.health > 0)
+  );
+
+  <span class="key">if</span> (attackDir) {
+    actions.push({ type: <span class="str">'Attack'</span>, direction: attackDir });
+  } <span class="key">else</span> {
+    <span class="key">const</span> free = dirs.filter(d => floorMap?.[adjacent[d].x]?.[adjacent[d].y]);
+    <span class="key">if</span> (free.length) actions.push({ type: <span class="str">'Move'</span>,
+      direction: free[Math.floor(Math.random() * free.length)] });
+  }
+
+  res.json(actions);
+});
+
+<span class="cmt">// Called when game ends — no response needed</span>
+app.post(<span class="str">'/game-ended'</span>, (req, res) => {
+  console.log(<span class="str">'Game over, winner:'</span>, req.body.winner?.name);
+  res.sendStatus(200);
+});
+
+app.listen(<span class="num">3000</span>, () => console.log(<span class="str">'Bot listening on :3000'</span>));</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>EvG Player Cheat Sheet &nbsp;·&nbsp; Register at <strong>POST /api/players</strong> &nbsp;·&nbsp; Default timeout: 1 s per turn &nbsp;·&nbsp; Max rounds: 20</footer>
+</body>
+</html>

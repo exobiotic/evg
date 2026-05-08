@@ -34,12 +34,17 @@ namespace EvG.Controllers
         public async Task Get()
         {
             var response = _httpContextAccessor.HttpContext.Response;
-            response.Headers.Add("Content-Type", "text/event-stream");
+            response.Headers["Content-Type"] = "text/event-stream";
 
             EventHandler<GameEventArgs> createdHandler = async (object sender, GameEventArgs args) =>
             {
-                await response.WriteAsync($"data: {{ \"type\": \"game-created\"}}\n\n");
-                response.Body.Flush();
+                var gameData = new
+                {
+                    type = "game-created",
+                    players = GameEngine.CurrentGame?.Spec?.Players ?? Array.Empty<Player>()
+                };
+                await response.WriteAsync($"data: {JsonConvert.SerializeObject(gameData, SerializationSettings)}\n\n");
+                await response.Body.FlushAsync();
             };
             EventHandler<GameEventArgs> endedHandler = async (object sender, GameEventArgs args) =>
             {
@@ -50,10 +55,22 @@ namespace EvG.Controllers
             {
                 await response.WriteAsync($"data: {{ \"type\": \"{args.EventType}\", \"player\": {JsonConvert.SerializeObject(args.Player, SerializationSettings)}}}\n\n");
             };
+            EventHandler tournamentCompleteHandler = async (object sender, EventArgs args) =>
+            {
+                var winner = GameEngine.GetTournamentWinner();
+                var tournamentData = new
+                {
+                    type = "tournament-complete",
+                    winner
+                };
+                await response.WriteAsync($"data: {JsonConvert.SerializeObject(tournamentData, SerializationSettings)}\n\n");
+                await response.Body.FlushAsync();
+            };
             GameEngine.OnGameCreated += createdHandler;
             GameEngine.OnGameEnded += endedHandler;
             GameEngine.OnPlayerCreated += playerHandler;
             GameEngine.OnPlayerUpdated += playerHandler;
+            GameEngine.OnTournamentComplete += tournamentCompleteHandler;
 
             try
             {
@@ -65,6 +82,7 @@ namespace EvG.Controllers
                 GameEngine.OnGameEnded -= endedHandler;
                 GameEngine.OnPlayerCreated -= playerHandler;
                 GameEngine.OnPlayerUpdated -= playerHandler;
+                GameEngine.OnTournamentComplete -= tournamentCompleteHandler;
             }
         }
 

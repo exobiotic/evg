@@ -11,7 +11,7 @@ namespace EvG.Models
 {
     public class RemotePlayer: Player
     {
-        public string Address { get; set; }
+        public string? Address { get; set; }
 
         private HttpClient _client;
 
@@ -27,7 +27,7 @@ namespace EvG.Models
         public RemotePlayer()
         {
             _client = new HttpClient();
-            _client.Timeout = TimeSpan.FromSeconds(1);
+            _client.Timeout = TimeSpan.FromSeconds(5);
         }
 
         public override void SetTimeout(float timeout)
@@ -37,50 +37,59 @@ namespace EvG.Models
             _client.Timeout = TimeSpan.FromSeconds(timeout);
         }
 
-        public override async Task<Action[]> GetActions(Game game, Unit unit, Unit[] units, Unit[] foes)
-        {
-            var data = JsonConvert.SerializeObject(new
+            public override async Task<Action[]> GetActions(Game game, Unit unit, Unit[] units, Unit[] foes)
             {
-                game.Spec.FloorMap,
-                Unit = unit,
-                Units = units,
-                Foes = foes
-            }, SerializationSettings);
-
-            try
-            {
-                var response = await _client.PostAsync(Address, new StringContent(data));
-                if (response.IsSuccessStatusCode)
+                var data = JsonConvert.SerializeObject(new
                 {
-                    using (var rawReader = new StreamReader(await response.Content.ReadAsStreamAsync()))
-                    using (var reader = new JsonTextReader(rawReader))
+                    game.Spec.FloorMap,
+                    Unit = unit,
+                    Units = units,
+                    Foes = foes
+                }, SerializationSettings);
+
+                Console.WriteLine($"[DEBUG] -> POST {Address}  unit={unit.Id} foes={foes.Length}");
+                Console.WriteLine($"[DEBUG]    body={data}");
+
+                try
+                {
+                    var response = await _client.PostAsync(Address, new StringContent(data, System.Text.Encoding.UTF8, "application/json"));
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[DEBUG] <- {(int)response.StatusCode} body={responseString}");
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        var serializer = new JsonSerializer();
-                        return serializer.Deserialize<Action[]>(reader);
+                        var actions = JsonConvert.DeserializeObject<Action[]>(responseString, SerializationSettings) ?? new Action[0];
+                        Console.WriteLine($"[DEBUG]    parsed {actions.Length} action(s): {string.Join(", ", actions.Select(a => $"{a.Type}/{a.Direction}"))}");
+                        return actions;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[DEBUG]    non-success status {response.StatusCode}, returning empty actions");
+                        return new Action[0];
                     }
                 }
-                else
+                catch (TaskCanceledException)
                 {
+                    Console.WriteLine($"[DEBUG] TIMEOUT for {Address} after {_client.Timeout.TotalSeconds}s");
+                    return new Action[0];
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"[DEBUG] EXCEPTION for {Address}: {e.Message}");
                     return new Action[0];
                 }
             }
-            catch (Exception e)
+
+            public override async Task GameEnded(Game game, Unit[] units, Unit[] foes)
             {
-                Console.WriteLine(e);
-                return new Action[0];
+                var data = JsonConvert.SerializeObject(new
+                {
+                    game.Spec.FloorMap,
+                    Units = units,
+                    Foes = foes
+                }, SerializationSettings);
+
+                await _client.PostAsync(Address + "/end", new StringContent(data));
             }
-        }
-
-        public override async Task GameEnded(Game game, Unit[] units, Unit[] foes)
-        {
-            var data = JsonConvert.SerializeObject(new
-            {
-                game.Winner,
-                Units = units,
-                Foes = foes
-            }, SerializationSettings);
-
-            await _client.PostAsync(Address + "/end", new StringContent(data));
-        }
     }
 }

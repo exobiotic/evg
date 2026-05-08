@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title></title>
+    <title>EvG</title>
     <link rel="shortcut icon" type="image/png" href="" />
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser.js"></script>
     <style type="text/css">
@@ -20,6 +20,7 @@
         body {
             display: flex;
             background-color: #000;
+            overflow: auto;
         }
 
         .game-container {
@@ -29,7 +30,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
+            padding: 12px 0;
+            overflow: auto;
         }
 
         .pre-game {
@@ -72,8 +75,16 @@
 
         #game {
             display: none;
-            width: 320px;
-            height: 364px;
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: calc(100vh - 130px);
+            overflow: auto;
+        }
+
+        #game canvas {
+            display: block;
+            margin: 0 auto;
         }
 
         .player-area {
@@ -83,6 +94,8 @@
             font-family: arcade;
             color: #00cc00;
             text-shadow: 0 0 2px #00cc00;
+            display: flex;
+            flex-direction: column;
         }
 
         .player-area h1 {
@@ -96,6 +109,13 @@
             border-color: #00cc00;
         }
 
+        .players {
+            position: relative;
+            min-height: 160px;
+            width: 300px;
+            margin-bottom: 12px;
+        }
+
         .player {
             position: absolute;
             box-sizing: border-box;
@@ -103,6 +123,11 @@
             font-size: 20px;
             width: 300px;
             transition: transform ease-in 200ms, opacity linear 200ms;
+            text-overflow: ellipsis;
+            flex-grow: 0;
+            background-color: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00cc00;
+            border-radius: 4px;
         }
 
         .player-name {
@@ -127,6 +152,64 @@
         .hidden {
             opacity: 0;
         }
+
+        .battle-stats {
+            display: none;
+            background-color: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00cc00;
+            border-radius: 4px;
+            padding: 16px;
+            margin-top: 24px;
+            font-family: arcade;
+            color: #00cc00;
+            text-shadow: 0 0 2px #00cc00;
+            width: 300px;
+            box-sizing: border-box;
+        }
+
+        .battle-title {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 14px;
+            border-bottom: 1px solid #00cc00;
+            padding-bottom: 10px;
+        }
+
+        .battle-player {
+            margin-bottom: 14px;
+            padding: 10px;
+            border: 1px solid #00aa00;
+            border-radius: 3px;
+            background-color: rgba(0, 20, 0, 0.6);
+        }
+
+        .battle-player:last-child {
+            margin-bottom: 0;
+        }
+
+        .battle-player-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .battle-player-health,
+        .battle-player-units {
+            font-size: 16px;
+            margin: 4px 0;
+        }
+
+        .health-label,
+        .units-label {
+            color: #00aa00;
+        }
+
+        .health-value,
+        .units-value {
+            color: #00ff00;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -140,8 +223,7 @@
     <div class="player-area">
         <h1>Scores</h1>
         <hr />
-        <div class="players">
-        </div>
+        <div class="players"></div>
     </div>
 </body>
 </html>

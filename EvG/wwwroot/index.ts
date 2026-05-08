@@ -5,11 +5,23 @@ import { IPlayer } from './js/IPlayer.js';
 
 let currentGame: Game | null = null;
 let continuePlaying: boolean = true;
+let tournamentComplete: boolean = false;
 const api = new API();
-const scoreBoard = new ScoreBoard(document.querySelector('.players'))
+const scoreBoard = new ScoreBoard(document.querySelector('.players') as HTMLElement)
 const startButton = document.querySelector('#start-button') as HTMLButtonElement;
 const stopButton = document.querySelector('#stop-button') as HTMLButtonElement;
 const game = (document.querySelector('#game') as HTMLDivElement);
+
+function showTournamentSplash(winner?: IPlayer) {
+    endGaming();
+    const preInfo = document.querySelector('.pre-game') as HTMLElement;
+    if (winner != null) {
+        preInfo.innerHTML = `Tournament Winner<br/>${winner.name}`;
+    } else {
+        preInfo.innerHTML = 'Tournament Over<br/>Draw';
+    }
+    preInfo.style.display = 'unset';
+}
 
 function showGame() {
     startButton.style.display = 'none';
@@ -19,15 +31,18 @@ function showGame() {
     stopButton.style.display = 'unset';
     game.style.display = 'unset';
 
-    currentGame = new Game(api);
+    currentGame = new Game(api, scoreBoard);
 }
 
 function endGaming() {
-    currentGame.destroy();
+    if (currentGame != null) {
+        currentGame.destroy();
+    }
     currentGame = null;
     startButton.style.display = 'unset';
     stopButton.style.display = 'none';
     game.style.display = 'none';
+    scoreBoard.endBattle();
 }
 
 const eventSource = new EventSource('/api/game');
@@ -36,21 +51,30 @@ eventSource.onmessage = (event) => {
         return;
     }
 
-    const action: { type: string, player?: IPlayer, winner?: IPlayer } = JSON.parse(event.data);
+    const action: { type: string, player?: IPlayer, winner?: IPlayer, players?: IPlayer[] } = JSON.parse(event.data);
     console.log(action.type);
 
     if (action.type === 'game-created') {
+        tournamentComplete = false;
         console.log('Game has been created');
+        // Extract player IDs and start battle stats tracking
+        if (action.players && action.players.length > 0) {
+            scoreBoard.startBattle(action.players.map(p => p.id));
+        }
         showGame();
     } else if (action.type === 'game-ended') {
         console.log('Game ended');
         setTimeout(() => {
-            if (continuePlaying) {
+            if (continuePlaying && !tournamentComplete) {
                 api.createGame();
             } else {
                 endGaming();
             }
         }, 3000);
+    } else if (action.type === 'tournament-complete') {
+        tournamentComplete = true;
+        continuePlaying = false;
+        showTournamentSplash(action.winner);
     } else if (action.type.startsWith('player') && action.player != null) {
         console.log('Player updated');
         scoreBoard.createOrUpdatePlayer(action.player);
@@ -88,6 +112,10 @@ api.getPlayers()
 
 startButton.addEventListener('click', () => {
     continuePlaying = true;
+    tournamentComplete = false;
+    const preInfo = document.querySelector('.pre-game') as HTMLElement;
+    preInfo.innerHTML = 'Waiting<br />for<br />players...';
+    preInfo.style.display = 'none';
     api.createGame();
     stopButton.disabled = false;
 });

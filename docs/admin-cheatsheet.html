@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>EvG – Admin Cheat Sheet</title>
+  <style>
+    @page { size: A4; margin: 15mm 18mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #1a1a2e; background: #fff; }
+
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      color: #e94560;
+      padding: 14px 20px 10px;
+      border-radius: 6px;
+      margin-bottom: 14px;
+      display: flex; align-items: flex-end; justify-content: space-between;
+    }
+    header h1 { font-size: 26px; letter-spacing: 2px; color: #e94560; }
+    header .sub { font-size: 11px; color: #a8b2d8; margin-top: 2px; }
+    header .badge { background: #e94560; color: #fff; border-radius: 4px; padding: 3px 10px; font-size: 11px; font-weight: bold; letter-spacing: 1px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .full { grid-column: 1 / -1; }
+
+    .card {
+      border: 1.5px solid #dee3f0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .card-header {
+      background: #0f3460;
+      color: #e0e8ff;
+      padding: 6px 12px;
+      font-weight: bold;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .card-header .icon { font-size: 14px; }
+    .card-body { padding: 10px 12px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: #f0f4ff;
+      color: #0f3460;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 4px 8px;
+      text-align: left;
+      border-bottom: 1.5px solid #c5d0e8;
+    }
+    td { padding: 4px 8px; border-bottom: 1px solid #eef0f8; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f7f9ff; }
+
+    code {
+      background: #1a1a2e;
+      color: #e94560;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: 'Consolas', monospace;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .method {
+      display: inline-block;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 9px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      color: #fff;
+      min-width: 36px;
+      text-align: center;
+    }
+    .get    { background: #2e7d32; }
+    .post   { background: #1565c0; }
+    .put    { background: #e65100; }
+    .delete { background: #b71c1c; }
+
+    .json-block {
+      background: #0d1117;
+      color: #c9d1d9;
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-family: 'Consolas', monospace;
+      font-size: 10.5px;
+      line-height: 1.6;
+      margin-top: 4px;
+      overflow-x: auto;
+    }
+    .json-block .key   { color: #79c0ff; }
+    .json-block .str   { color: #a5d6ff; }
+    .json-block .num   { color: #f97583; }
+    .json-block .bool  { color: #ffab70; }
+    .json-block .cmt   { color: #8b949e; font-style: italic; }
+
+    .tag {
+      display: inline-block;
+      border-radius: 10px;
+      padding: 1px 7px;
+      font-size: 9px;
+      font-weight: bold;
+      margin-left: 4px;
+    }
+    .tag-opt  { background: #e3f2fd; color: #1565c0; }
+    .tag-req  { background: #fce4ec; color: #b71c1c; }
+    .tag-def  { background: #e8f5e9; color: #2e7d32; }
+
+    .event-row td:first-child { font-weight: bold; color: #0f3460; }
+    .note { background: #fff8e1; border-left: 3px solid #f9a825; padding: 5px 8px; border-radius: 0 4px 4px 0; font-size: 10.5px; margin-top: 6px; }
+
+    footer { margin-top: 14px; text-align: center; color: #8b949e; font-size: 9px; border-top: 1px solid #dee3f0; padding-top: 6px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>EvG</h1>
+    <div class="sub">Evo Game Engine — REST API Reference</div>
+  </div>
+  <div class="badge">ADMIN</div>
+</header>
+
+<div class="grid">
+
+  <!-- ── GAME LIFECYCLE ── -->
+  <div class="card full">
+    <div class="card-header"><span class="icon">⚙️</span> Game Lifecycle  <code style="font-size:10px;margin-left:4px">POST /api/game</code></div>
+    <div class="card-body">
+      <table>
+        <tr><th>Action (body)</th><th>Effect</th><th>Requires</th></tr>
+        <tr><td><code>"new"</code></td><td>Create a new game — picks 2 players at random from the player pool, loads a random map, places units. In tournament mode this call becomes a no-op after all unique player pairs have played.</td><td>≥ 2 players registered</td></tr>
+        <tr><td><code>"start"</code></td><td>Start the game loop — units begin acting every <em>ActionDelay</em> ms</td><td>Game created first</td></tr>
+      </table>
+      <div class="note">Both calls return <code>200 OK</code> with empty body. Send <code>Content-Type: application/json</code>. If tournament pairings are complete, <code>"new"</code> still returns 200 but does not create another match.</div>
+    </div>
+  </div>
+
+  <!-- ── TOURNAMENT MODE ── -->
+  <div class="card full">
+    <div class="card-header"><span class="icon">🏆</span> Tournament Mode</div>
+    <div class="card-body">
+      <table>
+        <tr><th>Behavior</th><th>Details</th></tr>
+        <tr><td>Default scheduling</td><td>The engine tracks completed pairings and stops creating new games once every unique player-vs-player pairing has happened N times (configurable via <code>rematchCount</code>).</td></tr>
+        <tr><td>Completion rule</td><td>Total required matches = <code>n * (n - 1) / 2 * rematchCount</code>, where <code>n</code> is number of registered players.</td></tr>
+        <tr><td>When complete</td><td>A tournament-complete signal is raised internally and future <code>POST /api/game</code> with body <code>"new"</code> becomes a no-op.</td></tr>
+        <tr><td>Reset endpoint</td><td><code>POST /api/admin/tournament-reset</code> clears pairing history and sets tournament back to incomplete state.</td></tr>
+        <tr><td>Configuration</td><td>Set <code>rematchCount</code> in <code>PUT /api/admin/game-config</code> to change how many times each pair must play (default: 1).</td></tr>
+      </table>
+      <div class="json-block">
+<span class="cmt">// Reset tournament progress</span>
+POST /api/admin/tournament-reset</div>
+      <div class="note">Useful during testing: change <code>rematchCount</code> to make shorter tournaments (rematchCount=1) or longer ones (rematchCount=3 means each pair plays 3 times before tournament ends).</div>
+    </div>
+  </div>
+
+  <!-- ── GAME CONFIG ── -->
+  <div class="card full">
+    <div class="card-header"><span class="icon">🔧</span> Game Config  <code style="font-size:10px;margin-left:4px">PUT /api/admin/game-config</code></div>
+    <div class="card-body">
+      <table>
+        <tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr>
+        <tr><td><code>actionDelay</code></td><td>int</td><td class="tag tag-def">400 ms</td><td>Delay between unit actions in milliseconds</td></tr>
+        <tr><td><code>gameValue</code></td><td>int</td><td class="tag tag-def">1</td><td>Score points awarded to winner per game</td></tr>
+        <tr><td><code>playerTimeout</code></td><td>float</td><td class="tag tag-def">1.0 s</td><td>Max seconds to wait for player HTTP response before skipping turn</td></tr>
+        <tr><td><code>forceMove</code></td><td>bool</td><td class="tag tag-def">false</td><td>Units lose 1 HP when forced off the map edge</td></tr>
+        <tr><td><code>bloodLust</code></td><td>bool</td><td class="tag tag-def">false</td><td>Units must attack if an enemy is adjacent</td></tr>
+        <tr><td><code>fog</code></td><td>bool</td><td class="tag tag-def">false</td><td>Players only see units within line-of-sight</td></tr>
+        <tr><td><code>randomOrder</code></td><td>bool</td><td class="tag tag-def">false</td><td>Randomise unit turn order each round</td></tr>
+        <tr><td><code>staticOrder</code></td><td>bool</td><td class="tag tag-def">false</td><td>Lock unit turn order to initial spawn order</td></tr>
+        <tr><td><code>mapWidth</code></td><td>int</td><td class="tag tag-def">10</td><td>Battle map width in tiles</td></tr>
+        <tr><td><code>mapHeight</code></td><td>int</td><td class="tag tag-def">10</td><td>Battle map height in tiles</td></tr>
+        <tr><td><code>rematchCount</code></td><td>int</td><td class="tag tag-def">1</td><td>Number of times each player pair must play before tournament is complete</td></tr>
+      </table>
+      <p style="margin-top:6px; font-size:10.5px; color:#555;">All fields are <span class="tag tag-opt">optional</span> — only send what you want to change. Takes effect on the <em>next</em> game created.</p>
+      <div class="json-block">
+<span class="cmt">// Example — larger 15x15 map with 3 rematches per pairing</span>
+PUT /api/admin/game-config
+{
+  <span class="key">"mapWidth"</span>: <span class="num">15</span>,
+  <span class="key">"mapHeight"</span>: <span class="num">15</span>,
+  <span class="key">"rematchCount"</span>: <span class="num">3</span>
+}</div>
+    </div>
+  </div>
+
+  <!-- ── PLAYER MANAGEMENT ── -->
+  <div class="card">
+    <div class="card-header"><span class="icon">👥</span> Player Management</div>
+    <div class="card-body">
+      <table>
+        <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/players</code></td><td>List all registered players</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/players</code></td><td>Register or update a player</td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/admin/update-score</code></td><td>Manually override a player's score</td></tr>
+      </table>
+      <div class="json-block">
+<span class="cmt">// Register player body</span>
+{
+  <span class="key">"id"</span>:      <span class="str">"team-alpha"</span>,  <span class="cmt">// unique key</span>
+  <span class="key">"name"</span>:    <span class="str">"Alpha Bot"</span>,
+  <span class="key">"address"</span>: <span class="str">"http://10.0.0.5:3000"</span>
+}</div>
+    </div>
+  </div>
+
+  <!-- ── SERVER-SENT EVENTS ── -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📡</span> Game Event Stream  <code style="font-size:10px;margin-left:4px">GET /api/game</code></div>
+    <div class="card-body">
+      <p style="font-size:10.5px;margin-bottom:6px;">Subscribe with <code>EventSource</code> — server pushes events as <code>text/event-stream</code>.</p>
+      <table>
+        <tr><th>Event type</th><th>Extra fields</th></tr>
+        <tr class="event-row"><td>game-created</td><td><em>none</em></td></tr>
+        <tr class="event-row"><td>game-ended</td><td><em>none</em></td></tr>
+        <tr class="event-row"><td>player-created</td><td><code>player</code> object</td></tr>
+        <tr class="event-row"><td>player-updated</td><td><code>player</code> object</td></tr>
+      </table>
+      <div class="json-block">
+<span class="cmt">// Sample SSE message</span>
+data: {<span class="key">"type"</span>:<span class="str">"player-updated"</span>,
+       <span class="key">"player"</span>:{<span class="key">"id"</span>:<span class="str">"team-alpha"</span>,
+                  <span class="key">"name"</span>:<span class="str">"Alpha Bot"</span>,
+                  <span class="key">"score"</span>:<span class="num">3</span>}}</div>
+    </div>
+  </div>
+
+  <!-- ── QUERY ENDPOINTS ── -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🔍</span> Query Endpoints</div>
+    <div class="card-body">
+      <table>
+        <tr><th>Method</th><th>Endpoint</th><th>Returns</th></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/game/spec</code></td><td>Current game spec (map, units, players)</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/units</code></td><td>All unit type specs (sprites, animations)</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/players</code></td><td>All players with current scores</td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/api/game/actions</code></td><td>SSE stream of in-game actions</td></tr>
+      </table>
+      <div class="note">All endpoints run on <strong>http://localhost:5000</strong> by default (http). HTTPS on port <strong>5001</strong>.</div>
+    </div>
+  </div>
+
+  <!-- ── QUICK CURL ── -->
+  <div class="card">
+    <div class="card-header"><span class="icon">💻</span> Quick Reference — curl / PowerShell</div>
+    <div class="card-body">
+      <div class="json-block">
+<span class="cmt"># Create a new game</span>
+curl -X POST http://localhost:5000/api/game \
+  -H "Content-Type: application/json" -d '"new"'
+
+<span class="cmt"># Start the game</span>
+curl -X POST http://localhost:5000/api/game \
+  -H "Content-Type: application/json" -d '"start"'
+
+<span class="cmt"># Set action delay to 600ms</span>
+curl -X PUT http://localhost:5000/api/admin/game-config \
+  -H "Content-Type: application/json" \
+  -d '{"actionDelay":600}'
+
+<span class="cmt"># PowerShell — register a player</span>
+Invoke-RestMethod -Uri http://localhost:5000/api/players `
+  -Method POST -ContentType "application/json" `
+  -Body '{"id":"p1","name":"Bot","address":"http://..."}'</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>EvG Admin Cheat Sheet &nbsp;·&nbsp; .NET 8 &nbsp;·&nbsp; localhost:5000 (http) / localhost:5001 (https)</footer>
+</body>
+</html>

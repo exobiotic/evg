@@ -16,7 +16,7 @@ namespace EvG.Models
             Y = y;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             var coord = obj as Coordinate;
             if (coord == null)

@@ -5,14 +5,15 @@ import { IGameSpec } from "./IGameSpec.js";
 import { TileType } from "./TileType.js";
 import { MainScene } from './MainScene.js';
 import { IUnitSpec } from "./IUnitSpec.js";
+import { ScoreBoard } from "./ScoreBoard.js";
 
 export class Game {
-    public engine: Phaser.Game;
-    public spec: IGameSpec;
-    private config: GameConfig;
-    private unitSpecs: IUnitSpec[];
+    public engine!: Phaser.Game;
+    public spec!: IGameSpec;
+    private config!: GameConfig;
+    private unitSpecs!: IUnitSpec[];
 
-    constructor(private api: API) {
+    constructor(private api: API, private scoreBoard?: ScoreBoard) {
         this.getSpecs()
             .then(() => {
                 console.log('Creating visual game')
@@ -22,7 +23,7 @@ export class Game {
                     parent: 'game',
                     width: map.width * map.tilewidth,
                     height: map.height * map.tileheight + MainScene.topBarHeight,
-                    scene: new MainScene(this.spec, this.unitSpecs, api.getEventSource())
+                    scene: new MainScene(this.spec, this.unitSpecs, api.getEventSource(), this.scoreBoard)
                 };
 
                 this.engine = new Phaser.Game(this.config);

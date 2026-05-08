@@ -14,5 +14,9 @@ namespace EvG.Models
         public bool Fog { get; set; }
         public bool RandomOrder { get; set; }
         public bool StaticOrder { get; set; }
+        public bool TournamentMode { get; set; } = true;
+        public int RematchCount { get; set; } = 1;
+        public int MapWidth { get; set; } = 10;
+        public int MapHeight { get; set; } = 10;
     }
 }

@@ -34,9 +34,16 @@ namespace EvG.Controllers
         public async Task Get()
         {
             var gameTask = new Task(() => { });
-            var game = _gameEngine.CurrentGame;
             var response = _httpContextAccessor.HttpContext.Response;
-            response.Headers.Add("Content-Type", "text/event-stream");
+            response.Headers["Content-Type"] = "text/event-stream";
+
+            // Wait for a game to be created if one doesn't exist yet
+            while (_gameEngine.CurrentGame == null)
+            {
+                await Task.Delay(100);
+            }
+
+            var game = _gameEngine.CurrentGame;
 
             EventHandler<MoveEventArgs> moveHandler = async (object sender, MoveEventArgs args) =>
             {
@@ -70,19 +77,19 @@ namespace EvG.Controllers
         private async Task WriteMoveEvent(HttpResponse response, MoveEventArgs eventArgs)
         {
             await response.WriteAsync($"data: {{ \"type\": \"move\", \"unit\": {JsonConvert.SerializeObject(eventArgs.Unit, SerializationSettings)}}}\n\n");
-            response.Body.Flush();
+            await response.Body.FlushAsync();
         }
 
         private async Task WriteAttackEvent(HttpResponse response, AttackEventArgs eventArgs)
         {
             await response.WriteAsync($"data: {{ \"type\": \"attack\", \"unit\": {JsonConvert.SerializeObject(eventArgs.Unit, SerializationSettings)}, \"target\": {JsonConvert.SerializeObject(eventArgs.Target, SerializationSettings)}}}\n\n");
-            response.Body.Flush();
+            await response.Body.FlushAsync();
         }
 
         private async Task WriteGameEndedEvent(HttpResponse response, GameEventArgs eventArgs)
         {
             await response.WriteAsync($"data: {{ \"type\": \"game-ended\", \"winner\": {JsonConvert.SerializeObject(eventArgs.Winner, SerializationSettings)}}}\n\n");
-            response.Body.Flush();
+            await response.Body.FlushAsync();
         }
     }
 }

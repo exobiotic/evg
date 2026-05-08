@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace EvG.Models
 {
     public class Action
     {
+        [JsonProperty("actionType")]
         public ActionType Type { get; set; }
         public Direction Direction { get; set; }
 

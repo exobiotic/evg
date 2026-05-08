@@ -7,9 +7,9 @@ namespace EvG.Models
 {
     public class GameEventArgs: EventArgs
     {
-        public string EventType { get; set; }
+        public string? EventType { get; set; }
 
-        public Player Winner { get; set; }
+        public Player? Winner { get; set; }
 
         public GameEventArgs(string eventType)
         {

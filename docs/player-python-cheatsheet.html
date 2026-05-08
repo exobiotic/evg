@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvG Python Player Integration Cheat Sheet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        h2 {
+            color: #34495e;
+            font-size: 1.8em;
+            margin-top: 35px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+
+        h3 {
+            color: #34495e;
+            font-size: 1.3em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #2980b9;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        p {
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+            line-height: 1.4;
+            font-size: 0.95em;
+        }
+
+        .code-title {
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 8px 12px;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        pre + p {
+            margin-top: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th {
+            background: #3498db;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #e8f4f8;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+            border-radius: 3px;
+        }
+
+        .highlight strong {
+            color: #856404;
+        }
+
+        .flow {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .flow ol {
+            margin-left: 20px;
+        }
+
+        .flow li {
+            margin-bottom: 10px;
+        }
+
+        .flow code {
+            background: white;
+            color: #d63384;
+        }
+
+        ul {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .grid-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+
+        .endpoint {
+            background: #ecf0f1;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        .method-get {
+            color: #27ae60;
+        }
+
+        .method-post {
+            color: #e74c3c;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                max-width: 100%;
+                box-shadow: none;
+                padding: 20px;
+            }
+            h2 {
+                page-break-inside: avoid;
+            }
+            pre {
+                page-break-inside: avoid;
+            }
+            table {
+                page-break-inside: avoid;
+            }
+        }
+
+        .note {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 3px;
+        }
+
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>EvG Python Player Integration</h1>
+            <p class="subtitle">Complete Guide to Building Python AI Players for EvG Game Server</p>
+        </header>
+
+        <!-- Setup Section -->
+        <section class="section">
+            <h2>Quick Setup</h2>
+            
+            <h3>Prerequisites</h3>
+            <ul>
+                <li>Python 3.6 or higher</li>
+                <li>Tornado web framework (<code>pip install tornado</code>)</li>
+                <li>EvG game server running (Docker or local .NET 8 instance)</li>
+            </ul>
+
+            <h3>Installation</h3>
+            <p>Clone or download the evg-python folder from your EvG project:</p>
+            <pre>git clone https://github.com/yourorg/evg.git
+cd evg/evg-python
+pip install tornado
+python main.py</pre>
+            
+            <p>Your Python player server will start listening on port 9080 (or your configured port) and automatically register with the EvG game server.</p>
+
+            <div class="note">
+                <strong>Note:</strong> The <code>main.py</code> uses file monitoring to auto-reload your <code>player.py</code> changes without restarting the server.
+            </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section class="section">
+            <h2>Architecture Overview</h2>
+            
+            <p>Your Python player integrates with EvG through a simple HTTP callback model:</p>
+
+            <div class="flow">
+                <ol>
+                    <li><strong>Registration:</strong> Your Python server calls <code>POST /api/players</code> on the EvG server with your player info</li>
+                    <li><strong>Game Loop:</strong> During each unit turn, EvG sends <code>POST http://your-bot:port/</code> with game state (JSON)</li>
+                    <li><strong>Decision:</strong> Your <code>get_actions()</code> function analyzes the game state and returns a list of Action objects</li>
+                    <li><strong>Response:</strong> Actions are serialized to JSON and sent back to EvG (under 1 second timeout)</li>
+                    <li><strong>Game End:</strong> EvG calls <code>POST http://your-bot:port/end</code> when the game finishes</li>
+                </ol>
+            </div>
+
+            <h3>Key Components</h3>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>player.py</code></td>
+                    <td>Your AI logic: <code>get_actions()</code>, <code>get_player_info()</code>, <code>game_end()</code></td>
+                </tr>
+                <tr>
+                    <td><code>main.py</code></td>
+                    <td>HTTP server (Tornado), handles incoming requests, file monitoring, registration</td>
+                </tr>
+                <tr>
+                    <td><code>game.py</code></td>
+                    <td>Helper classes: <code>GameState</code>, <code>Unit</code>, <code>Action</code>, utility functions</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Game State Section -->
+        <section class="section">
+            <h2>Game State & Data Models</h2>
+
+            <h3>GameState Class</h3>
+            <p>Provided in <code>game.py</code>, represents the complete game state at your unit's turn:</p>
+
+            <pre class="code-title">GameState Properties</pre>
+            <pre>state.unit        # Your unit (Unit object)
+state.units       # Your other units (list of Unit objects)
+state.foes        # Enemy units (list of Unit objects)
+state.floor_map   # 2D map layout: True = walkable, False = wall
+state.empty_map   # 2D map with unit positions: True = empty, False = occupied</pre>
+
+            <h3>Unit Class</h3>
+            <p>Represents a single unit with position, health, and power:</p>
+
+            <pre class="code-title">Unit Properties</pre>
+            <pre>unit.id       # Unique identifier (string, GUID)
+unit.x        # X coordinate (int)
+unit.y        # Y coordinate (int)
+unit.health   # Current health (int, default 9)
+unit.power    # Attack damage (int, default 3)</pre>
+
+            <h3>Unit Methods</h3>
+            <pre class="code-title">Unit Helper Methods</pre>
+            <pre># Get distance from unit to target position (uses cached distance map)
+distance = unit.get_distance(target_x, target_y, state)
+
+# Returns None if position is unreachable, otherwise integer distance</pre>
+
+            <h3>Action Class</h3>
+            <p>Represents a single unit action (move or attack in a direction):</p>
+
+            <pre class="code-title">Creating Actions</pre>
+            <pre>from game import Action
+
+# Move action
+action = Action("Move", "Up")      # Directions: "Up", "Down", "Left", "Right"
+
+# Attack action
+action = Action("Attack", "Right")
+
+# JSON serialization (automatic)
+# {"actionType": "Move", "direction": "Up"}</pre>
+
+            <div class="note">
+                <strong>Note:</strong> Each unit can perform at most 2 actions per turn (one move + one attack), but your <code>get_actions()</code> function should return only 1 action. For multiple units, you return a list.
+            </div>
+
+            <h3>Utility Functions</h3>
+            <pre class="code-title">game.py Utilities</pre>
+            <pre>from game import is_empty, build_distance_map
+
+# Check if a position is empty and walkable
+if is_empty(target_x, target_y, state):
+    # Safe to move here
+    pass
+
+# Build your own distance map from custom position
+my_dist_map = build_distance_map(start_x, start_y, state.floor_map)</pre>
+        </section>
+
+        <!-- Player Implementation Section -->
+        <section class="section">
+            <h2>Implementing Your Player</h2>
+
+            <h3>Required Functions (player.py)</h3>
+
+            <p>You must implement three functions in <code>player.py</code>:</p>
+
+            <h3>1. get_player_info()</h3>
+            <pre class="code-title">Player Information</pre>
+            <pre>def get_player_info():
+    return {
+        "id": "cc9ddc91-2e0d-4565-af30-a39748f2344b",  # Unique player ID (GUID)
+        "name": "Swamp Prawns"                           # Display name in game
+    }</pre>
+
+            <div class="highlight">
+                <strong>Important:</strong> Your player ID must be unique per player. Use a GUID generator to create unique IDs for multiple players.
+            </div>
+
+            <h3>2. get_actions(state: GameState)</h3>
+            <p>Called once per unit turn. Analyze the game state and return action(s):</p>
+
+            <pre class="code-title">Basic Implementation - Always Move Up</pre>
+            <pre>from game import Action, is_empty
+
+def get_actions(state):
+    actions = []
+    
+    # Get your unit
+    unit = state.unit
+    
+    # Try to move up
+    if unit.y > 0 and is_empty(unit.x, unit.y - 1, state):
+        actions.append(Action("Move", "Up"))
+    else:
+        # Fallback: try right
+        actions.append(Action("Move", "Right"))
+    
+    return actions</pre>
+
+            <h3>3. game_end()</h3>
+            <p>Called when the game finishes. Use for cleanup or logging:</p>
+
+            <pre class="code-title">Game End Handler</pre>
+            <pre>def game_end():
+    # Cleanup resources, log statistics, etc.
+    print("Game ended!")
+    # No return value needed</pre>
+
+            <h3>Return Format</h3>
+            <p>Your <code>get_actions()</code> must return a list of <code>Action</code> objects. When returned, they are automatically serialized to JSON:</p>
+
+            <pre class="code-title">Return Format Example</pre>
+            <pre># Python return
+actions = [Action("Move", "Up")]
+
+# Auto-serialized to JSON sent to EvG:
+[{"actionType": "Move", "direction": "Up"}]</pre>
+        </section>
+
+        <!-- Example Strategies Section -->
+        <section class="section">
+            <h2>Strategy Examples</h2>
+
+            <h3>Strategy 1: Simple Random Walker</h3>
+            <pre class="code-title">Random Movement Strategy</pre>
+            <pre>import random
+from game import Action, is_empty
+
+def get_actions(state):
+    directions = ["Up", "Down", "Left", "Right"]
+    random.shuffle(directions)
+    
+    for direction in directions:
+        x, y = state.unit.x, state.unit.y
+        
+        if direction == "Up":
+            y -= 1
+        elif direction == "Down":
+            y += 1
+        elif direction == "Left":
+            x -= 1
+        elif direction == "Right":
+            x += 1
+        
+        # Check bounds and emptiness
+        if 0 <= x < len(state.floor_map) and \
+           0 <= y < len(state.floor_map[0]) and \
+           is_empty(x, y, state):
+            return [Action("Move", direction)]
+    
+    # No valid move found, stay still (return empty list)
+    return []</pre>
+
+            <h3>Strategy 2: Chase Nearest Enemy</h3>
+            <pre class="code-title">Chase Strategy Using Distance Maps</pre>
+            <pre>from game import Action
+
+def get_actions(state):
+    unit = state.unit
+    
+    # Find nearest foe
+    nearest_foe = None
+    min_distance = float('inf')
+    
+    for foe in state.foes:
+        if foe.health > 0:  # Only consider alive enemies
+            distance = unit.get_distance(foe.x, foe.y, state)
+            if distance is not None and distance < min_distance:
+                min_distance = distance
+                nearest_foe = foe
+    
+    if nearest_foe is None:
+        return []
+    
+    # Move toward foe
+    if nearest_foe.x < unit.x:
+        return [Action("Move", "Left")]
+    elif nearest_foe.x > unit.x:
+        return [Action("Move", "Right")]
+    elif nearest_foe.y < unit.y:
+        return [Action("Move", "Up")]
+    elif nearest_foe.y > unit.y:
+        return [Action("Move", "Down")]
+    else:
+        # We're on the same tile, attack!
+        return [Action("Attack", "Up")]  # Direction varies by position</pre>
+
+            <h3>Strategy 3: Balanced Offense/Defense</h3>
+            <pre class="code-title">Smart Combat Strategy</pre>
+            <pre>from game import Action, is_empty
+
+def get_actions(state):
+    unit = state.unit
+    
+    # If health is low, try to heal by moving away
+    if unit.health <= 3:
+        for direction in ["Up", "Down", "Left", "Right"]:
+            x, y = unit.x, unit.y
+            if direction == "Up":
+                y -= 1
+            elif direction == "Down":
+                y += 1
+            elif direction == "Left":
+                x -= 1
+            elif direction == "Right":
+                x += 1
+            
+            if is_empty(x, y, state):
+                return [Action("Move", direction)]
+    
+    # Check for adjacent enemies to attack
+    for foe in state.foes:
+        if foe.health <= 0:
+            continue
+        
+        # Adjacent horizontally?
+        if foe.y == unit.y and abs(foe.x - unit.x) == 1:
+            direction = "Left" if foe.x < unit.x else "Right"
+            return [Action("Attack", direction)]
+        
+        # Adjacent vertically?
+        if foe.x == unit.x and abs(foe.y - unit.y) == 1:
+            direction = "Up" if foe.y < unit.y else "Down"
+            return [Action("Attack", direction)]
+    
+    # No adjacent enemies, move toward nearest foe
+    nearest_foe = min(
+        [f for f in state.foes if f.health > 0],
+        key=lambda f: unit.get_distance(f.x, f.y, state) or float('inf'),
+        default=None
+    )
+    
+    if nearest_foe:
+        if nearest_foe.x < unit.x:
+            if is_empty(unit.x - 1, unit.y, state):
+                return [Action("Move", "Left")]
+        elif nearest_foe.x > unit.x:
+            if is_empty(unit.x + 1, unit.y, state):
+                return [Action("Move", "Right")]
+        elif nearest_foe.y < unit.y:
+            if is_empty(unit.x, unit.y - 1, state):
+                return [Action("Move", "Up")]
+        elif nearest_foe.y > unit.y:
+            if is_empty(unit.x, unit.y + 1, state):
+                return [Action("Move", "Down")]
+    
+    return []</pre>
+        </section>
+
+        <!-- Configuration Section -->
+        <section class="section">
+            <h2>Configuration & Networking</h2>
+
+            <h3>Environment Variables</h3>
+            <p>Control server behavior via environment variables:</p>
+
+            <table>
+                <tr>
+                    <th>Variable</th>
+                    <th>Default</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>EVG_SERVER</code></td>
+                    <td><code>http://127.0.0.1:5000</code></td>
+                    <td>EvG server URL (where to register)</td>
+                </tr>
+                <tr>
+                    <td><code>PLAYER_HOST</code></td>
+                    <td><code>10.255.255.254</code></td>
+                    <td>Your IP/hostname that EvG can reach</td>
+                </tr>
+            </table>
+
+            <h3>Running with Custom Configuration</h3>
+            <pre class="code-title">Custom Environment</pre>
+            <pre># Windows PowerShell
+$env:EVG_SERVER = "http://192.168.1.100:8080"
+$env:PLAYER_HOST = "192.168.1.50"
+python main.py
+
+# Linux/macOS bash
+export EVG_SERVER="http://192.168.1.100:8080"
+export PLAYER_HOST="192.168.1.50"
+python main.py</pre>
+
+            <h3>Port Configuration</h3>
+            <p>Edit the port in <code>main.py</code>:</p>
+
+            <pre class="code-title">Changing Server Port</pre>
+            <pre>if __name__ == '__main__':
+    port = 9080  # Change this line
+    # ... rest of code</pre>
+
+            <h3>Network Requirements</h3>
+            <ul>
+                <li><strong>Outbound:</strong> Your bot must reach EvG server on startup (for registration)</li>
+                <li><strong>Inbound:</strong> EvG must reach your bot on the configured port during games</li>
+                <li><strong>Timeout:</strong> Your <code>get_actions()</code> must complete within <strong>1 second</strong></li>
+                <li><strong>Response Size:</strong> Keep JSON responses small (typically &lt;500 bytes)</li>
+            </ul>
+
+            <div class="warning">
+                <strong>⚠️ Important:</strong> If your Python bot is behind a NAT or Docker container, set <code>PLAYER_HOST</code> to an address that the EvG server can actually reach. Container-to-container networking requires proper host configuration.
+            </div>
+        </section>
+
+        <!-- Testing Section -->
+        <section class="section">
+            <h2>Testing Your Player</h2>
+
+            <h3>Step 1: Start Your Server</h3>
+            <pre>cd evg-python
+python main.py</pre>
+
+            <p>You should see output like:</p>
+            <pre>Starting HTTP server at port 9080
+Registered player OK</pre>
+
+            <h3>Step 2: Test with a Mock Request</h3>
+            <p>Send a sample game state to your bot using PowerShell:</p>
+
+            <pre class="code-title">Test Request (PowerShell)</pre>
+            <pre>$gameState = @{
+    unit = @{id="u1"; x=5; y=5; health=9; power=3}
+    units = @()
+    foes = @(@{id="f1"; x=6; y=5; health=5; power=2})
+    floorMap = @(
+        @($true, $true, $false),
+        @($true, $true, $true),
+        @($false, $true, $true)
+    )
+}
+
+$json = $gameState | ConvertTo-Json -Depth 5
+Invoke-WebRequest `
+    -Uri "http://localhost:9080" `
+    -Method POST `
+    -ContentType "application/json" `
+    -Body $json</pre>
+
+            <h3>Expected Response</h3>
+            <pre class="code-title">Sample Response</pre>
+            <pre>[
+  {
+    "actionType": "Move",
+    "direction": "Up"
+  }
+]</pre>
+
+            <h3>Step 3: Launch an EvG Game</h3>
+            <ul>
+                <li>Start the EvG server (Docker or <code>dotnet run</code>)</li>
+                <li>Navigate to <code>http://localhost:8080</code> in your browser</li>
+                <li>Click "Admin" and verify your Python bot appears in the registered players list</li>
+                <li>Click "Launch Game" to start a match</li>
+            </ul>
+
+            <h3>Debugging Tips</h3>
+            <ul>
+                <li><strong>Check server output:</strong> Watch the Python console for errors and request logs</li>
+                <li><strong>Add print statements:</strong> <code>print(state.unit)</code> to debug state in <code>get_actions()</code></li>
+                <li><strong>File auto-reload:</strong> Edit <code>player.py</code> and changes load automatically (no restart needed)</li>
+                <li><strong>Check EvG admin panel:</strong> Verify your bot registered with correct ID and address</li>
+                <li><strong>Network issues:</strong> If registration fails, verify <code>EVG_SERVER</code> and <code>PLAYER_HOST</code> environment variables</li>
+            </ul>
+        </section>
+
+        <!-- Multiple Players Section -->
+        <section class="section">
+            <h2>Running Multiple Players</h2>
+
+            <p>To register multiple players from the same Python codebase, run multiple instances on different ports:</p>
+
+            <pre class="code-title">Running 4 Players (PowerShell)</pre>
+            <pre># Terminal 1
+python main.py  # Uses port 9080
+
+# Terminal 2
+$env:EVG_SERVER = "http://127.0.0.1:5000"
+python -c "
+import sys
+sys.path.insert(0, '.')
+import main
+main.port = 9081
+main.safe_register(9081)
+main.start_server(9081)
+"
+
+# Or use the provided script:
+.\registerPlayers.ps1</pre>
+
+            <p>The <code>registerPlayers.ps1</code> script in evg-python automatically registers 4 players on ports 9080-9083.</p>
+
+            <div class="note">
+                <strong>Note:</strong> Each instance loads the same <code>player.py` code but has a unique ID and port. Modify `get_player_info()` to return different names per instance if desired.
+            </div>
+        </section>
+
+        <!-- Performance Section -->
+        <section class="section">
+            <h2>Performance Considerations</h2>
+
+            <h3>Response Time Budget</h3>
+            <ul>
+                <li>EvG allows <strong>1 second</strong> per action decision</li>
+                <li>Network latency + processing must fit in this window</li>
+                <li>Tornado server is non-blocking, so multiple requests won't queue</li>
+            </ul>
+
+            <h3>Optimization Tips</h3>
+            <ul>
+                <li><strong>Cache distance maps:</strong> Unit objects cache their distance maps automatically</li>
+                <li><strong>Avoid nested loops:</strong> Use <code>min()</code>/<code>max()</code> with generator expressions</li>
+                <li><strong>Lazy evaluation:</strong> Only compute distances for alive enemies</li>
+                <li><strong>Profile your code:</strong> Use Python's <code>cProfile</code> to find bottlenecks</li>
+            </ul>
+
+            <h3>Large Map Optimization</h3>
+            <pre class="code-title">Fast Nearest Enemy Search</pre>
+            <pre>def get_nearest_alive_enemy(unit, foes, state):
+    """Find nearest living enemy efficiently"""
+    alive_foes = [f for f in foes if f.health > 0]
+    
+    if not alive_foes:
+        return None
+    
+    # Only compute distances for alive enemies
+    return min(
+        alive_foes,
+        key=lambda f: unit.get_distance(f.x, f.y, state) or float('inf')
+    )</pre>
+        </section>
+
+        <!-- Tornado Details Section -->
+        <section class="section">
+            <h2>Advanced: Tornado Server Details</h2>
+
+            <p>The <code>main.py</code> uses the Tornado web framework. Key aspects:</p>
+
+            <h3>Request Handling Flow</h3>
+            <pre class="code-title">How Requests Are Processed</pre>
+            <pre>MainHandler receives POST
+  ↓
+Extract JSON payload (game state)
+  ↓
+Call player.get_actions(GameState(payload))
+  ↓
+Serialize Action list to JSON
+  ↓
+Return JSON response (200 OK)
+  ↓
+If exception: return 500 with error message</pre>
+
+            <h3>File Monitoring</h3>
+            <p><code>main.py</code> spawns a monitor thread that watches <code>player.py</code> for changes:</p>
+
+            <ul>
+                <li>Detects file writes every 1 second (<code>poll_interval = 0.1</code>)</li>
+                <li>Auto-reloads module using <code>importlib.reload()</code></li>
+                <li>No server restart needed—changes take effect immediately</li>
+                <li>Useful during development for rapid iteration</li>
+            </ul>
+
+            <h3>Customizing the Server</h3>
+            <pre class="code-title">Advanced Configuration</pre>
+            <pre>import tornado.ioloop
+import tornado.web
+
+# Modify handlers
+class DebugHandler(tornado.web.RequestHandler):
+    def post(self):
+        print(f"Received: {self.request.body}")
+        # Your custom logic
+
+def make_app():
+    return tornado.web.Application([
+        (r"/debug", DebugHandler),
+        (r"/.*", MainHandler),  # Default handler
+    ])</pre>
+        </section>
+
+        <!-- Common Errors Section -->
+        <section class="section">
+            <h2>Troubleshooting</h2>
+
+            <table>
+                <tr>
+                    <th>Error</th>
+                    <th>Cause</th>
+                    <th>Solution</th>
+                </tr>
+                <tr>
+                    <td><code>register_player failed</code></td>
+                    <td>Can't reach EvG server</td>
+                    <td>Check <code>EVG_SERVER</code> env var, ensure EvG is running on correct port</td>
+                </tr>
+                <tr>
+                    <td><code>Connection refused: port 9080</code></td>
+                    <td>Port already in use</td>
+                    <td>Change <code>port = 9080</code> in <code>main.py</code> to another port (9081, etc.)</td>
+                </tr>
+                <tr>
+                    <td><code>EvG never calls your bot</code></td>
+                    <td><code>PLAYER_HOST</code> unreachable from EvG</td>
+                    <td>Set <code>PLAYER_HOST</code> to IP/hostname EvG can actually reach (not localhost)</td>
+                </tr>
+                <tr>
+                    <td><code>Timeout: bot too slow</code></td>
+                    <td><code>get_actions()</code> takes &gt;1 second</td>
+                    <td>Optimize your algorithm, avoid expensive computations, cache results</td>
+                </tr>
+                <tr>
+                    <td><code>KeyError: 'unit'</code></td>
+                    <td>Missing field in game state</td>
+                    <td>Check your <code>GameState(payload)</code> initialization, validate incoming JSON</td>
+                </tr>
+                <tr>
+                    <td><code>TypeError: unhashable type</code></td>
+                    <td>Returning wrong type from <code>get_actions()</code></td>
+                    <td>Must return <code>list</code> of <code>Action</code> objects, not dict or string</td>
+                </tr>
+            </table>
+
+            <div class="highlight">
+                <strong>Quick Debug:</strong> Add this to <code>get_actions()</code> to log all incoming state:
+                <pre>def get_actions(state):
+    print(f"Unit at ({state.unit.x}, {state.unit.y}), health: {state.unit.health}")
+    print(f"Foes: {len(state.foes)}")
+    # Your logic here</pre>
+            </div>
+        </section>
+
+        <!-- Reference Section -->
+        <section class="section">
+            <h2>Quick Reference</h2>
+
+            <div class="grid">
+                <div class="grid-item">
+                    <h3>Player Files</h3>
+                    <ul>
+                        <li><strong>player.py</strong> — Your AI logic</li>
+                        <li><strong>main.py</strong> — HTTP server</li>
+                        <li><strong>game.py</strong> — Data models</li>
+                    </ul>
+                </div>
+                <div class="grid-item">
+                    <h3>Key Classes</h3>
+                    <ul>
+                        <li><code>GameState</code> — Full game state</li>
+                        <li><code>Unit</code> — Unit with position/health</li>
+                        <li><code>Action</code> — Move/Attack + direction</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="grid-item">
+                    <h3>API Endpoints</h3>
+                    <ul>
+                        <li><code>POST /</code> — Decision request</li>
+                        <li><code>POST /end</code> — Game end callback</li>
+                        <li><code>GET /</code> — Help text</li>
+                    </ul>
+                </div>
+                <div class="grid-item">
+                    <h3>Directions</h3>
+                    <ul>
+                        <li>"Up", "Down"</li>
+                        <li>"Left", "Right"</li>
+                        <li>Case-sensitive strings</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="grid-item">
+                    <h3>Environment Variables</h3>
+                    <ul>
+                        <li><code>EVG_SERVER</code> — EvG URL</li>
+                        <li><code>PLAYER_HOST</code> — Your reachable address</li>
+                    </ul>
+                </div>
+                <div class="grid-item">
+                    <h3>Limits</h3>
+                    <ul>
+                        <li><strong>1 second</strong> decision timeout</li>
+                        <li><strong>Max 20 rounds</strong> per game</li>
+                        <li><strong>2 actions</strong> per unit per turn (move + attack)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <section style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; color: #7f8c8d;">
+            <p><strong>EvG Python Player Integration Cheat Sheet</strong> — For detailed API documentation, see admin-cheatsheet.html</p>
+            <p>Questions or improvements? Check the evg-python folder README.md</p>
+        </section>
+    </div>
+</body>
+</html>

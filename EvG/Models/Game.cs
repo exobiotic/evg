@@ -11,15 +11,15 @@ namespace EvG.Models
         public static readonly int MaxRounds = 20;
 
         public GameSpec Spec { get; }
-        public Unit[] Units { get; private set; }
-        public event EventHandler<MoveEventArgs> OnUnitMoved;
-        public event EventHandler<AttackEventArgs> OnUnitAttacked;
-        public event EventHandler<DeathEventArgs> OnUnitDied;
-        public event EventHandler OnMaxRounds;
-        public event EventHandler<GameEventArgs> OnGameEnded;
+        public Unit[]? Units { get; private set; }
+        public event EventHandler<MoveEventArgs>? OnUnitMoved;
+        public event EventHandler<AttackEventArgs>? OnUnitAttacked;
+        public event EventHandler<DeathEventArgs>? OnUnitDied;
+        public event EventHandler? OnMaxRounds;
+        public event EventHandler<GameEventArgs>? OnGameEnded;
         public GameConfig GameConfig { get; set; }
-        public Player[] Players { get; }
-        public Player Winner
+        public Player[]? Players { get; private set; }
+        public Player? Winner
         {
             get
             {
@@ -61,10 +61,10 @@ namespace EvG.Models
             }
         }
 
-        private Task Updater;
+        private Task? Updater;
         private Dictionary<string, Player> PlayerLookup = new Dictionary<string, Player>();
         private int round = 0;
-        private RNGCryptoServiceProvider random = new RNGCryptoServiceProvider();
+        private readonly RandomNumberGenerator random = RandomNumberGenerator.Create()!;
 
         public Game(GameSpec spec, Player player1, Player player2, GameConfig gameConfig)
         {
@@ -339,7 +339,12 @@ namespace EvG.Models
 
         private bool IsOpen(int x, int y)
         {
-            return Spec.FloorMap[x][y] && !Units.Any((u) => u.X == x && u.Y == y && u.Health > 0);
+            return x >= 0 &&
+                y >= 0 &&
+                Spec.FloorMap.Length > x &&
+                Spec.FloorMap[x].Length > y &&
+                Spec.FloorMap[x][y] && 
+                !Units.Any((u) => u.X == x && u.Y == y && u.Health > 0);
         }
     }
 }

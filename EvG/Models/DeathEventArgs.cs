@@ -7,6 +7,6 @@ namespace EvG.Models
 {
     public class DeathEventArgs : EventArgs
     {
-        public Unit Unit;
+        public Unit? Unit;
     }
 }

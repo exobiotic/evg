@@ -6,18 +6,23 @@ import { IMoveAction } from "./IMoveAction.js";
 import { IAttackAction } from "./IAttackAction.js";
 import { IGameEnded } from "./IGameEnded.js";
 import { IPlayer } from "./IPlayer.js";
+import { ScoreBoard } from "./ScoreBoard.js";
 
 export class MainScene extends Phaser.Scene {
     public static readonly topBarHeight = 40;
 
-    private tileSet: Phaser.Tilemaps.Tileset;
-    private tileMap: Phaser.Tilemaps.Tilemap;
+    private tileSet!: Phaser.Tilemaps.Tileset;
+    private tileMap!: Phaser.Tilemaps.Tilemap;
     private units: Map<string, Unit> = new Map();
+    private unitToPlayerMap: Map<string, string> = new Map();
+    private playerUnitsMap: Map<string, string[]> = new Map();
 
-    constructor(private gameSpec: IGameSpec, private unitSpecs: IUnitSpec[], private eventSource: EventSource) {
+    constructor(private gameSpec: IGameSpec, private unitSpecs: IUnitSpec[], private eventSource: EventSource, private scoreBoard?: ScoreBoard) {
         super({
             key: "MainScene"
         });
+
+        this.initializeUnitOwnership();
 
         eventSource.onmessage = (event) => {
             if (event == null || event.data == null) {
@@ -28,14 +33,22 @@ export class MainScene extends Phaser.Scene {
                 const unit = action.unit;
                 let actor: Unit | null = null;
                 if (this.units.has(unit.id)) {
-                    actor = this.units.get(unit.id);
+                    actor = this.units.get(unit.id) || null;
                     if (actor != null && actor.health != unit.health) {
                         actor.damage(actor.health - unit.health);
                     }
                 }
                 if (action.type === 'move') {
                     if (actor != null) {
-                        actor.move(unit.x, unit.y);
+                        const isWithinBounds = unit.x >= 0 &&
+                            unit.y >= 0 &&
+                            unit.x < this.gameSpec.map.width &&
+                            unit.y < this.gameSpec.map.height;
+                        if (isWithinBounds) {
+                            actor.move(unit.x, unit.y);
+                        } else {
+                            console.warn(`Ignoring out-of-bounds move for unit ${unit.id}: (${unit.x}, ${unit.y})`);
+                        }
                     }
                 } else if (action.type === 'attack') {
                     if (actor != null) {
@@ -43,20 +56,79 @@ export class MainScene extends Phaser.Scene {
                     }
                     if (action.target != null && this.units.has(action.target.id)) {
                         const target = this.units.get(action.target.id);
-                        this.units.get(action.target.id).damage(target.health - action.target.health);
+                        if (target != null) {
+                            target.damage(target.health - action.target.health);
+                        }
                     }
+                }
+                
+                // Update battle stats after unit action
+                this.updateBattleStats(unit.id);
+                if (action.type === 'attack' && (action as IAttackAction).target != null) {
+                    this.updateBattleStats((action as IAttackAction).target!.id);
                 }
             } else if (action.type === 'game-ended') {
                 this.displayWinner(action.winner);
+                if (this.scoreBoard) {
+                    this.scoreBoard.endBattle();
+                }
             }
         };
+    }
+
+    private initializeUnitOwnership() {
+        // Map each unit to its owner player based on unit type
+        if (this.gameSpec.units.length === 0 || this.gameSpec.players.length === 0) {
+            return;
+        }
+
+        const unitTypes = [...new Set(this.gameSpec.units.map(u => u.type))];
+        
+        this.gameSpec.units.forEach(unit => {
+            if (this.gameSpec.players.length >= 2) {
+                // Determine player based on unit type order
+                const typeIndex = unitTypes.indexOf(unit.type);
+                const playerId = this.gameSpec.players[Math.min(typeIndex, this.gameSpec.players.length - 1)].id;
+                this.unitToPlayerMap.set(unit.id, playerId);
+                
+                if (!this.playerUnitsMap.has(playerId)) {
+                    this.playerUnitsMap.set(playerId, []);
+                }
+                this.playerUnitsMap.get(playerId)!.push(unit.id);
+            }
+        });
+    }
+
+    private updateBattleStats(unitId: string) {
+        const playerId = this.unitToPlayerMap.get(unitId);
+        if (!playerId || !this.scoreBoard) {
+            return;
+        }
+
+        const playerUnitIds = this.playerUnitsMap.get(playerId);
+        if (!playerUnitIds) {
+            return;
+        }
+
+        // Collect current unit stats for this player
+        const playerUnits = playerUnitIds
+            .map(id => this.units.get(id))
+            .filter(u => u != null) as Unit[];
+
+        if (playerUnits.length > 0) {
+            // Calculate total health
+            const totalHealth = playerUnits.reduce((sum, u) => sum + u.health, 0);
+            const aliveCount = playerUnits.filter(u => u.health > 0).length;
+
+            // Report to scoreboard
+            this.scoreBoard.recordUnitStats(playerId, playerUnits as any);
+        }
     }
 
     preload(): void {
         this.gameSpec.map.tilesets.forEach((tileSet) => {
             this.load.image(tileSet.name, tileSet.image);
         });
-        this.load.tilemapTiledJSON('map', this.gameSpec.tilemap);
 
         this.unitSpecs.forEach((unitSpec) => {
             this.load.spritesheet(unitSpec.name,
@@ -67,9 +139,33 @@ export class MainScene extends Phaser.Scene {
     }
 
     create(): void {
-        const map = this.make.tilemap({ key: "map" });
+        const mapSpec = this.gameSpec.map;
+        const baseLayer = mapSpec.layers[0];
+        const layerData: number[][] = [];
+        for (let y = 0; y < mapSpec.height; y++) {
+            const row: number[] = [];
+            for (let x = 0; x < mapSpec.width; x++) {
+                row.push(baseLayer.data[y * mapSpec.width + x]);
+            }
+            layerData.push(row);
+        }
+
+        const map = this.make.tilemap({
+            data: layerData,
+            tileWidth: mapSpec.tilewidth,
+            tileHeight: mapSpec.tileheight
+        });
+
         this.gameSpec.map.tilesets.forEach((tileSet) => {
-            const tileset = map.addTilesetImage(tileSet.name, tileSet.name);
+            const tileset = map.addTilesetImage(
+                tileSet.name,
+                tileSet.name,
+                mapSpec.tilewidth,
+                mapSpec.tileheight,
+                0,
+                0,
+                tileSet.firstgid || 1
+            );
             map.createStaticLayer(0, tileset, 0, MainScene.topBarHeight);
         });
 
@@ -81,6 +177,10 @@ export class MainScene extends Phaser.Scene {
                 this.gameSpec.map.tileheight * (unit.y + 0.5) + MainScene.topBarHeight,
                 unit.type);
             const unitSpec = this.unitSpecs.find((us) => us.name === unit.type);
+            if (!unitSpec) {
+                console.warn(`Unit spec not found for type: ${unit.type}`);
+                return;
+            }
             sprite.setScale(unitSpec.scale, unitSpec.scale);
             this.units.set(unit.id, new Unit(
                 sprite,
@@ -94,7 +194,6 @@ export class MainScene extends Phaser.Scene {
             ));
         })
 
-        const mapSpec = this.gameSpec.map;
         this.showIntro(mapSpec.width * mapSpec.tilewidth, mapSpec.height * mapSpec.tileheight)
     }
 
@@ -175,7 +274,9 @@ export class MainScene extends Phaser.Scene {
             p1UnitType
         );
         const p1UnitSpec = this.unitSpecs.find((us) => us.name === p1UnitType);
-        p1Sprite.setScale(p1UnitSpec.scale, p1UnitSpec.scale)
+        if (p1UnitSpec) {
+            p1Sprite.setScale(p1UnitSpec.scale, p1UnitSpec.scale)
+        }
         p1Sprite.anims.play(p1UnitType + '-right');
         const p1Text = this.add.text(
             width / 2 - MainScene.topBarHeight - extraSpace,
@@ -187,13 +288,19 @@ export class MainScene extends Phaser.Scene {
         await this.showExpandingText(width, height, 'VS');
 
         await this.showExpandingText(width, height, players[1], '100px');
-        const p2UnitType = this.gameSpec.units.find((u) => u.type !== p1UnitType).type;
+        const p2Unit = this.gameSpec.units.find((u) => u.type !== p1UnitType);
+        if (!p2Unit) {
+            throw new Error('Player 2 unit not found');
+        }
+        const p2UnitType = p2Unit.type;
         const p2Sprite = this.add.sprite(
             MainScene.topBarHeight / 2 + width / 2 + extraSpace,
             MainScene.topBarHeight / 2, p2UnitType
         );
         const p2UnitSpec = this.unitSpecs.find((us) => us.name === p2UnitType);
-        p2Sprite.setScale(p2UnitSpec.scale, p2UnitSpec.scale)
+        if (p2UnitSpec) {
+            p2Sprite.setScale(p2UnitSpec.scale, p2UnitSpec.scale)
+        }
         p2Sprite.anims.play(p2UnitType + '-left');
         const p2Text = this.add.text(
             MainScene.topBarHeight + width / 2 + extraSpace,
@@ -237,7 +344,7 @@ export class MainScene extends Phaser.Scene {
                     repeat: 0,
                     onComplete: () => {
                         textObj.destroy();
-                        resolve();
+                        resolve(undefined);
                     }
                 });
         });

@@ -52,10 +52,28 @@ namespace EvG.Controllers
             if (config.StaticOrder != null)
                 _gameEngine.GameConfig.RandomOrder = (bool)config.StaticOrder;
 
+            if (config.TournamentMode != null)
+                _gameEngine.GameConfig.TournamentMode = (bool)config.TournamentMode;
+
             if (config.PlayerTimeout != null)
                 _gameEngine.SetPlayerTimeout((float)config.PlayerTimeout);
 
+            if (config.RematchCount != null)
+                _gameEngine.GameConfig.RematchCount = (int)config.RematchCount;
 
+            if (config.MapWidth != null)
+                _gameEngine.GameConfig.MapWidth = (int)config.MapWidth;
+
+            if (config.MapHeight != null)
+                _gameEngine.GameConfig.MapHeight = (int)config.MapHeight;
+
+            return Ok();
+        }
+
+        [HttpPost("api/[controller]/tournament-reset")]
+        public ActionResult ResetTournament()
+        {
+            _gameEngine.ResetTournament();
             return Ok();
         }
     }
