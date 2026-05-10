@@ -74,7 +74,10 @@ namespace EvG.Controllers
                 _gameEngine.GameConfig.AttackDamage = Math.Max(1, (int)config.AttackDamage);
 
             if (config.RematchCount != null)
+            {
                 _gameEngine.GameConfig.RematchCount = (int)config.RematchCount;
+                System.Console.WriteLine($"[ADMIN] RematchCount set to {config.RematchCount}");
+            }
 
             if (config.MapWidth != null)
                 _gameEngine.GameConfig.MapWidth = (int)config.MapWidth;

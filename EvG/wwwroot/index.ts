@@ -3,8 +3,10 @@ import { API } from './js/API.js';
 import { ScoreBoard } from './js/ScoreBoard.js';
 import { IPlayer } from './js/IPlayer.js';
 
+const observerMode = (document.body.dataset.mode || '').toLowerCase() === 'observer';
+
 let currentGame: Game | null = null;
-let continuePlaying: boolean = true;
+let continuePlaying: boolean = !observerMode;  // Controllers auto-play, observers don't
 let tournamentComplete: boolean = false;
 const api = new API();
 const scoreBoard = new ScoreBoard(document.querySelector('.players') as HTMLElement)
@@ -28,7 +30,7 @@ function showGame() {
     if (currentGame != null) {
         currentGame.destroy();
     }
-    stopButton.style.display = 'unset';
+    stopButton.style.display = observerMode ? 'none' : 'unset';
     game.style.display = 'unset';
 
     currentGame = new Game(api, scoreBoard);
@@ -39,10 +41,23 @@ function endGaming() {
         currentGame.destroy();
     }
     currentGame = null;
-    startButton.style.display = 'unset';
+    startButton.style.display = observerMode ? 'none' : 'unset';
     stopButton.style.display = 'none';
     game.style.display = 'none';
     scoreBoard.endBattle();
+
+    if (observerMode) {
+        const preInfo = document.querySelector('.pre-game') as HTMLElement;
+        preInfo.innerHTML = 'Observer Mode<br />Watching<br />live game...';
+        preInfo.style.display = 'unset';
+    }
+}
+
+if (observerMode) {
+    const preInfo = document.querySelector('.pre-game') as HTMLElement;
+    preInfo.innerHTML = 'Observer Mode<br />Watching<br />live game...';
+    startButton.style.display = 'none';
+    stopButton.style.display = 'none';
 }
 
 const eventSource = new EventSource('/api/game');
@@ -65,7 +80,7 @@ eventSource.onmessage = (event) => {
     } else if (action.type === 'game-ended') {
         console.log('Game ended');
         setTimeout(() => {
-            if (continuePlaying && !tournamentComplete) {
+            if (!observerMode && continuePlaying && !tournamentComplete) {
                 api.createGame();
             } else {
                 endGaming();
@@ -82,7 +97,9 @@ eventSource.onmessage = (event) => {
             const preInfo = document.querySelector('.pre-game') as HTMLElement;
             if (preInfo.style.display == '') {
                 preInfo.style.display = 'none'
-                startButton.style.display = 'unset';
+                if (!observerMode) {
+                    startButton.style.display = 'unset';
+                }
             }
         }
     }
@@ -105,22 +122,26 @@ api.getPlayers()
             const preInfo = document.querySelector('.pre-game') as HTMLElement;
             if (preInfo.style.display == '') {
                 preInfo.style.display = 'none'
-                startButton.style.display = 'unset';
+                if (!observerMode) {
+                    startButton.style.display = 'unset';
+                }
             }
         }
     });
 
-startButton.addEventListener('click', () => {
-    continuePlaying = true;
-    tournamentComplete = false;
-    const preInfo = document.querySelector('.pre-game') as HTMLElement;
-    preInfo.innerHTML = 'Waiting<br />for<br />players...';
-    preInfo.style.display = 'none';
-    api.createGame();
-    stopButton.disabled = false;
-});
+if (!observerMode) {
+    startButton.addEventListener('click', () => {
+        continuePlaying = true;
+        tournamentComplete = false;
+        const preInfo = document.querySelector('.pre-game') as HTMLElement;
+        preInfo.innerHTML = 'Waiting<br />for<br />players...';
+        preInfo.style.display = 'none';
+        api.createGame();
+        stopButton.disabled = false;
+    });
 
-stopButton.addEventListener('click', () => {
-    continuePlaying = false;
-    stopButton.disabled = true;
-});
+    stopButton.addEventListener('click', () => {
+        continuePlaying = false;
+        stopButton.disabled = true;
+    });
+}

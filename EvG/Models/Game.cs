@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EvG.Models
@@ -64,6 +65,8 @@ namespace EvG.Models
         private Task? Updater;
         private Dictionary<string, Player> PlayerLookup = new Dictionary<string, Player>();
         private int round = 0;
+        private int hasStarted = 0;
+        private int hasEnded = 0;
         private readonly RandomNumberGenerator random = RandomNumberGenerator.Create()!;
 
         public Game(GameSpec spec, Player player1, Player player2, GameConfig gameConfig)
@@ -80,12 +83,16 @@ namespace EvG.Models
 
         public void Start()
         {
+            if (Interlocked.Exchange(ref hasStarted, 1) == 1)
+            {
+                return;
+            }
+
             Spec.Active = true;
-            Updater = new Task(PlayGame);
-            Updater.Start();
+            Updater = Task.Run(PlayGame);
         }
 
-        private async void PlayGame()
+        private async Task PlayGame()
         {
             var playingUnits = GetInRandomOrder(Units);
 
@@ -107,6 +114,11 @@ namespace EvG.Models
 
         private async Task EndGame()
         {
+            if (Interlocked.Exchange(ref hasEnded, 1) == 1)
+            {
+                return;
+            }
+
             if (round == MaxRounds)
             {
                 OnMaxRounds?.Invoke(this, new EventArgs());

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using EvG.Models;
@@ -33,7 +34,7 @@ namespace EvG.Controllers
         [HttpGet]
         public async Task Get()
         {
-            var gameTask = new Task(() => { });
+            var gameCompletionSource = new TaskCompletionSource<bool>();
             var response = _httpContextAccessor.HttpContext.Response;
             response.Headers["Content-Type"] = "text/event-stream";
 
@@ -55,8 +56,14 @@ namespace EvG.Controllers
             };
             EventHandler<GameEventArgs> endedHandler = async (object sender, GameEventArgs args) =>
             {
-                await WriteGameEndedEvent(response, args);
-                gameTask.Start();
+                try
+                {
+                    await WriteGameEndedEvent(response, args);
+                }
+                finally
+                {
+                    gameCompletionSource.TrySetResult(true);
+                }
             };
             game.OnUnitMoved += moveHandler;
             game.OnUnitAttacked += attackHandler;
@@ -64,7 +71,7 @@ namespace EvG.Controllers
 
             try
             {
-                await gameTask;
+                await gameCompletionSource.Task;
             }
             finally
             {
@@ -76,20 +83,38 @@ namespace EvG.Controllers
 
         private async Task WriteMoveEvent(HttpResponse response, MoveEventArgs eventArgs)
         {
-            await response.WriteAsync($"data: {{ \"type\": \"move\", \"unit\": {JsonConvert.SerializeObject(eventArgs.Unit, SerializationSettings)}}}\n\n");
-            await response.Body.FlushAsync();
+            try
+            {
+                await response.WriteAsync($"data: {{ \"type\": \"move\", \"unit\": {JsonConvert.SerializeObject(eventArgs.Unit, SerializationSettings)}}}\n\n");
+                await response.Body.FlushAsync();
+            }
+            catch (ObjectDisposedException) { }
+            catch (OperationCanceledException) { }
+            catch (IOException) { }
         }
 
         private async Task WriteAttackEvent(HttpResponse response, AttackEventArgs eventArgs)
         {
-            await response.WriteAsync($"data: {{ \"type\": \"attack\", \"unit\": {JsonConvert.SerializeObject(eventArgs.Unit, SerializationSettings)}, \"target\": {JsonConvert.SerializeObject(eventArgs.Target, SerializationSettings)}}}\n\n");
-            await response.Body.FlushAsync();
+            try
+            {
+                await response.WriteAsync($"data: {{ \"type\": \"attack\", \"unit\": {JsonConvert.SerializeObject(eventArgs.Unit, SerializationSettings)}, \"target\": {JsonConvert.SerializeObject(eventArgs.Target, SerializationSettings)}}}\n\n");
+                await response.Body.FlushAsync();
+            }
+            catch (ObjectDisposedException) { }
+            catch (OperationCanceledException) { }
+            catch (IOException) { }
         }
 
         private async Task WriteGameEndedEvent(HttpResponse response, GameEventArgs eventArgs)
         {
-            await response.WriteAsync($"data: {{ \"type\": \"game-ended\", \"winner\": {JsonConvert.SerializeObject(eventArgs.Winner, SerializationSettings)}}}\n\n");
-            await response.Body.FlushAsync();
+            try
+            {
+                await response.WriteAsync($"data: {{ \"type\": \"game-ended\", \"winner\": {JsonConvert.SerializeObject(eventArgs.Winner, SerializationSettings)}}}\n\n");
+                await response.Body.FlushAsync();
+            }
+            catch (ObjectDisposedException) { }
+            catch (OperationCanceledException) { }
+            catch (IOException) { }
         }
     }
 }

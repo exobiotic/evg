@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Security.Cryptography;
 
@@ -20,7 +21,7 @@ namespace EvG.Models
 
         private Stack<Player> playerStack = new Stack<Player>();
         private readonly RandomNumberGenerator random = RandomNumberGenerator.Create()!;
-        private Dictionary<string, int> playedPairs = new Dictionary<string, int>();
+        private ConcurrentDictionary<string, int> playedPairs = new ConcurrentDictionary<string, int>();
 
         public void NewGame(GameSpec spec)
         {
@@ -91,7 +92,14 @@ namespace EvG.Models
 
         private void HandleGameEnding(object sender, GameEventArgs args)
         {
-            var winner = CurrentGame.Winner;
+            var game = sender as Game;
+            if (game == null)
+            {
+                return;
+            }
+
+            var winner = args.Winner ?? game.Winner;
+            Console.WriteLine($"[TOURNAMENT] HandleGameEnding: Winner={winner?.Name}, TournamentMode={GameConfig.TournamentMode}, IsTournamentComplete={IsTournamentComplete}");
             OnGameEnded?.Invoke(this, new GameEventArgs("game-ended") { Winner = winner });
             if (winner != null)
             {
@@ -101,18 +109,28 @@ namespace EvG.Models
 
             if (!GameConfig.TournamentMode)
             {
+                Console.WriteLine($"[TOURNAMENT] TournamentMode is OFF. Skipping tournament logic.");
                 return;
             }
 
             // Record this pair as played
-            RecordPlayedPair(CurrentGame.Spec.Players[0], CurrentGame.Spec.Players[1]);
+            if (game.Spec.Players != null && game.Spec.Players.Length == 2)
+            {
+                RecordPlayedPair(game.Spec.Players[0], game.Spec.Players[1]);
+            }
+            
+            Console.WriteLine($"[TOURNAMENT] Game ended. RematchCount={GameConfig.RematchCount}, Played pairs: {string.Join(", ", playedPairs.Select(kvp => $"{kvp.Key}:{kvp.Value}"))}");
 
             // Check if all pairs have now played
             if (AreAllPairsPlayed())
             {
                 IsTournamentComplete = true;
-                Console.WriteLine("Tournament complete! All player pairs have met.");
+                Console.WriteLine($"[TOURNAMENT] Tournament complete! All pairs have played {GameConfig.RematchCount}x each.");
                 OnTournamentComplete?.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                Console.WriteLine($"[TOURNAMENT] Tournament continues - not all conditions met yet.");
             }
         }
 
@@ -123,10 +141,7 @@ namespace EvG.Models
                 ? $"{p1.Id}|{p2.Id}"
                 : $"{p2.Id}|{p1.Id}";
             
-            if (playedPairs.ContainsKey(pair))
-                playedPairs[pair]++;
-            else
-                playedPairs[pair] = 1;
+            playedPairs.AddOrUpdate(pair, 1, (key, oldValue) => oldValue + 1);
         }
 
         private bool AreAllPairsPlayed()
@@ -134,15 +149,23 @@ namespace EvG.Models
             // Calculate total possible pairs: C(n, 2) = n * (n - 1) / 2
             int totalPairs = Players.Count * (Players.Count - 1) / 2;
             
+            Console.WriteLine($"[TOURNAMENT] AreAllPairsPlayed check: TotalPairs={totalPairs}, PlayedPairsCount={playedPairs.Count}, RematchCount={GameConfig.RematchCount}");
+            Console.WriteLine($"[TOURNAMENT] Played pairs detail: {string.Join("; ", playedPairs.Select(kvp => $"{kvp.Key}={kvp.Value}x"))}");
+            
             // Check if all pairs have played the required number of times
             foreach (var kvp in playedPairs)
             {
+                Console.WriteLine($"[TOURNAMENT] Checking {kvp.Key}: {kvp.Value} < {GameConfig.RematchCount}? {kvp.Value < GameConfig.RematchCount}");
                 if (kvp.Value < GameConfig.RematchCount)
+                {
+                    Console.WriteLine($"[TOURNAMENT] Pair {kvp.Key} has not played enough times. Returning false.");
                     return false;
+                }
             }
             
-            // Also ensure we have all possible pairs recorded at least once
-            return playedPairs.Count >= totalPairs;
+            bool result = playedPairs.Count >= totalPairs;
+            Console.WriteLine($"[TOURNAMENT] All pairs played required times. Final check: {playedPairs.Count} >= {totalPairs} = {result}");
+            return result;
         }
 
         public void ResetTournament()

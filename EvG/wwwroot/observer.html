@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>EvG Observer</title>
+    <link rel="shortcut icon" type="image/png" href="" />
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser.js"></script>
+    <style type="text/css">
+        @font-face {
+            font-family: arcade;
+            src: url("/font/arcadeclassic.ttf");
+        }
+
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            background-color: #000;
+            overflow: auto;
+        }
+
+        .game-container {
+            height: 100%;
+            background-color: #000;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 12px 0;
+            overflow: auto;
+        }
+
+        .pre-game {
+            color: #00cc00;
+            font-family: arcade;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        button {
+            display: none;
+            width: 120px;
+            height: 60px;
+            margin-top: 16px;
+            border: 1px solid #00cc00;
+            color: #00cc00;
+            box-shadow: #00cc00 2px 2px 8px;
+            background-color: #000;
+            font-family: arcade;
+            font-weight: 500;
+            font-size: 20px;
+            cursor: pointer;
+            outline-style: none;
+        }
+
+        #game {
+            display: none;
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: calc(100vh - 130px);
+            overflow: auto;
+        }
+
+        #game canvas {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .player-area {
+            width: 300px;
+            margin: 12px;
+            flex-grow: 0;
+            font-family: arcade;
+            color: #00cc00;
+            text-shadow: 0 0 2px #00cc00;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .player-area h1 {
+            padding-left: 6px;
+            margin-bottom: 0;
+            font-weight: 300;
+        }
+
+        .player-area hr {
+            margin-bottom: 18px;
+            border-color: #00cc00;
+        }
+
+        .players {
+            position: relative;
+            min-height: 160px;
+            width: 300px;
+            margin-bottom: 12px;
+        }
+
+        .player {
+            position: absolute;
+            box-sizing: border-box;
+            display: flex;
+            font-size: 20px;
+            width: 300px;
+            transition: transform ease-in 200ms, opacity linear 200ms;
+            text-overflow: ellipsis;
+            flex-grow: 0;
+            background-color: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00cc00;
+            border-radius: 4px;
+        }
+
+        .player-name {
+            padding: 12px;
+            flex-grow: 1;
+            flex-shrink: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-score {
+            margin-left: 6px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            width: 40px;
+            text-align: center;
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body data-mode="observer">
+    <script type="module" src="index.js"></script>
+    <div class="game-container">
+        <div class="pre-game">Observer Mode<br />Watching<br />live game...</div>
+        <button id="start-button">Launch</button>
+        <div id="game"></div>
+        <button id="stop-button">Stop</button>
+    </div>
+    <div class="player-area">
+        <h1>Scores</h1>
+        <hr />
+        <div class="players"></div>
+    </div>
+</body>
+</html>
